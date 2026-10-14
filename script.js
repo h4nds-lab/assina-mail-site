@@ -76,8 +76,8 @@ function makeSignature(profile = 'full') {
   const phone = value('phone');
   const website = safeUrl(value('website'));
   const address = value('address');
-  const image = (profile === 'full' ? '' : safeUrl(value('exportPhotoUrl'))) || safeUrl(value('imageUrl')) || (profile === 'full' ? state.imageData : '');
-  const logo = (profile === 'full' ? '' : safeUrl(value('exportLogoUrl'))) || safeUrl(value('logoUrl')) || (profile === 'full' ? state.logoData : '');
+  const image = profile === 'gmail' ? '' : safeUrl(value('imageUrl')) || (profile === 'full' ? state.imageData : '');
+  const logo = profile === 'gmail' ? '' : safeUrl(value('logoUrl')) || (profile === 'full' ? state.logoData : '');
   const linkedin = safeUrl(value('linkedin'));
   const instagram = safeUrl(value('instagram'));
   const tagline = value('tagline');
@@ -422,8 +422,6 @@ $('accentColor').addEventListener('input', (event) => { state.color = event.targ
 $('socialIconColor').addEventListener('input', (event) => { state.socialColor = event.target.value; render(); });
 fields.forEach((id) => {
   $(id).addEventListener('input', () => {
-    if (id === 'imageUrl') $('exportPhotoUrl').value = '';
-    if (id === 'logoUrl') $('exportLogoUrl').value = '';
     if (id === 'imageUrl' && value(id)) {
       state.imageData = ''; state.avatar = ''; state.emoji = ''; $('emojiInput').value = '';
       lastPhotoFile = null; $('editPhotoCrop').hidden = true;
@@ -442,7 +440,6 @@ fields.forEach((id) => {
 function selectPhoto(data, avatar = '') {
   state.imageData = data;
   state.avatar = avatar;
-  $('exportPhotoUrl').value = '';
   lastPhotoFile = null; $('editPhotoCrop').hidden = true;
   state.emoji = '';
   $('emojiInput').value = '';
@@ -461,7 +458,6 @@ $('emojiGrid').innerHTML = emojiOptions.map((emoji) => `<button type="button" cl
 function selectEmoji(emoji) {
   state.emoji = emoji.trim().slice(0,16);
   state.imageData = ''; state.avatar = ''; $('imageUrl').value = '';
-  $('exportPhotoUrl').value = '';
   lastPhotoFile = null; $('editPhotoCrop').hidden = true;
   document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
   document.querySelectorAll('.emoji-option').forEach((button) => button.classList.toggle('selected', button.dataset.emoji === state.emoji));
@@ -641,7 +637,6 @@ $('cropApply').addEventListener('click', () => {
       } catch { toast('Foto aplicada. O navegador não permitiu salvá-la na biblioteca.'); }
     } else {
       state.logoData = data; $('logoUrl').value = '';
-      $('exportLogoUrl').value = '';
       lastLogoFile = file; $('editLogoCrop').hidden = false;
       $('logoStatus').textContent = `Logo enviado: ${name.slice(0,36)}`;
       render(); toast('Logo ajustado e aplicado à assinatura.');
@@ -649,7 +644,7 @@ $('cropApply').addEventListener('click', () => {
     closeCropEditor();
   } catch { toast('Não foi possível aplicar o recorte. Tente outra imagem.'); }
 });
-$('removeLogo').addEventListener('click', () => { state.logoData = ''; lastLogoFile = null; $('editLogoCrop').hidden = true; $('logoUrl').value = ''; $('exportLogoUrl').value = ''; $('logoStatus').textContent = 'Usando iniciais da empresa'; render(); });
+$('removeLogo').addEventListener('click', () => { state.logoData = ''; lastLogoFile = null; $('editLogoCrop').hidden = true; $('logoUrl').value = ''; $('logoStatus').textContent = 'Usando iniciais da empresa'; render(); });
 document.querySelectorAll('[data-icon-style]').forEach((button) => button.addEventListener('click', () => {
   state.iconStyle = button.dataset.iconStyle;
   document.querySelectorAll('[data-icon-style]').forEach((option) => { const selected = option === button; option.classList.toggle('selected', selected); option.setAttribute('aria-pressed', String(selected)); });
@@ -666,52 +661,25 @@ $('accentIcons').addEventListener('click', (event) => {
 $('helpButton').addEventListener('click', () => $('helpDialog').showModal());
 $('helpDialog').addEventListener('click', (event) => { if (event.target === $('helpDialog')) $('helpDialog').close(); });
 const exportProfiles = {gmail:'Gmail',outlook:'Outlook',other:'Apple Mail e outros',full:'HTML completo'};
-function selectedExportProfile() { return $('emailProfile').value === 'full' ? 'full' : 'compatible'; }
-function missingExportImages() {
-  const missing = [];
-  if (state.imageData && !safeUrl(value('exportPhotoUrl')) && !safeUrl(value('imageUrl'))) missing.push('foto');
-  if (state.logoData && !safeUrl(value('exportLogoUrl')) && !safeUrl(value('logoUrl'))) missing.push('logo');
-  return missing;
-}
+function selectedExportProfile() { return $('emailProfile').value === 'gmail' ? 'gmail' : $('emailProfile').value === 'full' ? 'full' : 'compatible'; }
 function updateExportStatus() {
-  const target = $('emailProfile').value, html = makeSignature(selectedExportProfile()), missing = missingExportImages();
-  $('exportImageSetup').hidden = target === 'full' || !(state.imageData || state.logoData);
-  $('exportPhotoField').hidden = !state.imageData;
-  $('exportLogoField').hidden = !state.logoData;
-  $('downloadProfileImage').hidden = !state.imageData;
-  $('downloadLogoImage').hidden = !state.logoData;
+  const target = $('emailProfile').value, html = makeSignature(selectedExportProfile());
   $('copyButton').textContent = target === 'gmail' ? 'Copiar para Gmail' : 'Copiar assinatura';
   if (target === 'gmail') {
     const nearLimit = html.length > 9500;
-    $('exportGuidance').textContent = `${html.length.toLocaleString('pt-BR')} de 10.000 caracteres no Gmail.${nearLimit ? ' A assinatura ainda está longa; reduza textos ou escolha outro modelo.' : ' Copie e cole em Configurações → Assinatura.'}${missing.length ? $('copyWithoutImages').checked ? ` Você escolheu copiar sem ${missing.join(' e ')} local.` : ` ${missing.join(' e ')} local ainda sem URL pública; inclua o endereço abaixo.` : ''}`;
-    $('exportGuidance').classList.toggle('export-warning',nearLimit || missing.length > 0);
+    $('exportGuidance').textContent = `${html.length.toLocaleString('pt-BR')} de 10.000 caracteres. Copie e cole em Configurações → Assinatura. Foto e logo são substituídos por iniciais neste formato.${nearLimit ? ' Simplifique o texto ou o modelo se o Gmail recusar.' : ''}`;
+    $('exportGuidance').classList.toggle('export-warning',nearLimit);
   } else if (target === 'full') {
-    $('exportGuidance').textContent = 'Inclui imagens enviadas e ícones embutidos. Esse arquivo pode ultrapassar o limite do Gmail.';
+    $('exportGuidance').textContent = 'Arquivo HTML com imagens embutidas. Não use este formato no Gmail.';
     $('exportGuidance').classList.remove('export-warning');
   } else {
-    $('exportGuidance').textContent = `${exportProfiles[target]}: HTML com imagens por URL e ícones leves.${missing.length ? ` ${missing.join(' e ')} local ainda sem URL pública.` : ''}`;
-    $('exportGuidance').classList.toggle('export-warning',missing.length > 0);
+    $('exportGuidance').textContent = `${exportProfiles[target]}: imagens com URL pública entram na assinatura; arquivos locais aparecem como iniciais.`;
+    $('exportGuidance').classList.remove('export-warning');
   }
 }
 $('emailProfile').addEventListener('change',updateExportStatus);
-for (const id of ['exportPhotoUrl','exportLogoUrl','copyWithoutImages']) $(id).addEventListener('input',updateExportStatus);
-function downloadLocalImage(data,filename) {
-  if (!data) return;
-  const anchor = document.createElement('a'); anchor.href = data; anchor.download = filename;
-  document.body.append(anchor); anchor.click(); anchor.remove();
-}
-$('downloadProfileImage').addEventListener('click', () => downloadLocalImage(state.imageData,'foto-assinatura.png'));
-$('downloadLogoImage').addEventListener('click', () => downloadLocalImage(state.logoData,'logo-assinatura.png'));
-function canExportImages(target) {
-  if (target === 'full' || !missingExportImages().length || $('copyWithoutImages').checked) return true;
-  $('exportImageSetup').scrollIntoView({block:'nearest'});
-  toast('Para incluir foto e logo, informe URLs públicas. Ou marque “copiar sem as imagens locais”.');
-  return false;
-}
 $('copyButton').addEventListener('click', async () => {
   const target = $('emailProfile').value;
-  if (!canExportImages(target)) return;
-  if (target === 'full') await prepareContactIcons().catch(() => {});
   const html = makeSignature(selectedExportProfile());
   if (target === 'gmail' && html.length > 9500) { toast('Assinatura longa para o Gmail. Reduza textos ou escolha outro modelo.'); return; }
   try {
@@ -729,7 +697,6 @@ $('copyButton').addEventListener('click', async () => {
 });
 $('exportButton').addEventListener('click', async () => {
   const target = $('emailProfile').value;
-  if (!canExportImages(target)) return;
   if (target === 'full') await prepareContactIcons().catch(() => {});
   const signature = makeSignature(selectedExportProfile());
   if (target === 'gmail' && signature.length > 9500) { toast('Assinatura longa para o Gmail. Reduza textos ou escolha outro modelo.'); return; }
@@ -792,7 +759,6 @@ $('importTemplate').addEventListener('change', async (event) => {
     state.logoData = typeof org.logoData === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(org.logoData) && org.logoData.length < 750000 ? org.logoData : '';
     $('logoStatus').textContent = state.logoData ? 'Logo importado do modelo' : value('logoUrl') ? 'Usando logo por URL' : 'Usando iniciais da empresa';
     for (const id of ['name','role','email','phone','imageUrl']) $(id).value = '';
-    $('exportPhotoUrl').value = ''; $('exportLogoUrl').value = ''; $('copyWithoutImages').checked = false;
     state.imageData = ''; state.avatar = ''; state.emoji = ''; $('emojiInput').value = '';
     lastPhotoFile = null; lastLogoFile = null; $('editPhotoCrop').hidden = true; $('editLogoCrop').hidden = true;
     document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
