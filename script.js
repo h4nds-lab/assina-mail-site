@@ -324,44 +324,140 @@ $('photoLibrary').addEventListener('click', (event) => {
   const item = getLibrary().find((photo) => photo.id === button?.dataset.photo);
   if (item) { selectPhoto(item.data); toast('Foto aplicada à assinatura.'); }
 });
-$('photoFile').addEventListener('change', async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8_000_000) { toast('Use JPG, PNG ou WebP com até 8 MB.'); return; }
+let cropState = null;
+let cropPointer = null;
+function cropFrameSize(mode, ratio, image) {
+  if (mode === 'photo' || ratio === 'square') return {width:320,height:320};
+  if (ratio === 'horizontal') return {width:420,height:252};
+  const scale = Math.min(420 / image.width, 300 / image.height);
+  return {width:Math.max(1,Math.round(image.width * scale)),height:Math.max(1,Math.round(image.height * scale))};
+}
+function cropGeometry(imageWidth, imageHeight, frameWidth, frameHeight, zoom, offsetX, offsetY, contain) {
+  const scale = (contain ? Math.min(frameWidth / imageWidth, frameHeight / imageHeight) : Math.max(frameWidth / imageWidth, frameHeight / imageHeight)) * zoom;
+  const width = imageWidth * scale, height = imageHeight * scale;
+  const xLimit = Math.abs(width - frameWidth) / 2, yLimit = Math.abs(height - frameHeight) / 2;
+  const x = Math.max(-xLimit, Math.min(xLimit, offsetX));
+  const y = Math.max(-yLimit, Math.min(yLimit, offsetY));
+  return {x:(frameWidth-width)/2+x,y:(frameHeight-height)/2+y,width,height,offsetX:x,offsetY:y};
+}
+function paintCrop(canvas) {
+  const crop = cropState;
+  const geometry = cropGeometry(crop.image.width,crop.image.height,canvas.width,canvas.height,crop.zoom,crop.offsetX,crop.offsetY,crop.mode === 'logo');
+  crop.offsetX = geometry.offsetX; crop.offsetY = geometry.offsetY;
+  const context = canvas.getContext('2d');
+  context.clearRect(0,0,canvas.width,canvas.height);
+  context.save();
+  if (crop.mode === 'photo') {
+    context.beginPath();
+    context.arc(canvas.width/2,canvas.height/2,canvas.width/2,0,Math.PI*2);
+    context.clip();
+  }
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(crop.image,geometry.x,geometry.y,geometry.width,geometry.height);
+  context.restore();
+}
+function resetCropFrame() {
+  if (!cropState) return;
+  const frame = cropFrameSize(cropState.mode,cropState.ratio,cropState.image);
+  const canvas = $('cropCanvas'), viewport = $('cropViewport');
+  canvas.width = frame.width; canvas.height = frame.height;
+  viewport.className = `crop-viewport ${cropState.mode}`;
+  viewport.style.width = `${frame.width}px`;
+  viewport.style.aspectRatio = `${frame.width} / ${frame.height}`;
+  cropState.zoom = 1; cropState.offsetX = 0; cropState.offsetY = 0;
+  $('cropZoom').value = '1'; $('cropZoomValue').textContent = '100%';
+  document.querySelectorAll('[data-crop-ratio]').forEach((button) => button.classList.toggle('selected',button.dataset.cropRatio === cropState.ratio));
+  paintCrop(canvas);
+}
+async function openCropFile(file, mode) {
   const url = URL.createObjectURL(file);
   try {
     const image = new Image(); image.src = url; await image.decode();
-    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
-    const ctx = canvas.getContext('2d'), side = Math.min(image.width, image.height);
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 256, 256);
-    ctx.drawImage(image, (image.width - side) / 2, (image.height - side) / 2, side, side, 0, 0, 256, 256);
-    const data = canvas.toDataURL('image/jpeg', .82);
-    selectPhoto(data);
-    try {
-      const items = [{id:crypto.randomUUID(),name:file.name.slice(0,60),data},...getLibrary()].slice(0,8);
-      localStorage.setItem(libraryKey, JSON.stringify(items));
-      renderLibrary(); toast('Foto adicionada à assinatura e à biblioteca local.');
-    } catch { toast('Foto aplicada. O navegador não permitiu salvá-la na biblioteca.'); }
-  } catch { toast('Não foi possível abrir esta imagem.'); }
-  finally { URL.revokeObjectURL(url); event.target.value = ''; }
+    if (!image.width || !image.height) throw new Error('empty image');
+    cropState = {image,url,mode,name:file.name.slice(0,60),ratio:'original',zoom:1,offsetX:0,offsetY:0};
+    $('cropTitle').textContent = mode === 'photo' ? 'Recortar foto do perfil' : 'Ajustar logo da empresa';
+    $('cropDescription').textContent = mode === 'photo' ? 'Arraste para enquadrar o rosto no círculo. Use o zoom para aproximar.' : 'Mantenha a proporção original ou escolha um recorte. O fundo transparente do PNG é preservado.';
+    $('cropRatios').hidden = mode !== 'logo';
+    resetCropFrame();
+    $('cropDialog').showModal();
+    $('cropViewport').focus();
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    cropState = null;
+    throw error;
+  }
+}
+for (const [id,mode] of [['photoFile','photo'],['logoFile','logo']]) {
+  $(id).addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8_000_000) { toast('Use JPG, PNG ou WebP com até 8 MB.'); return; }
+    try { await openCropFile(file,mode); }
+    catch { toast('Não foi possível abrir esta imagem.'); }
+  });
+}
+document.querySelectorAll('[data-crop-ratio]').forEach((button) => button.addEventListener('click', () => {
+  if (!cropState || cropState.mode !== 'logo') return;
+  cropState.ratio = button.dataset.cropRatio;
+  resetCropFrame();
+}));
+$('cropZoom').addEventListener('input', (event) => {
+  if (!cropState) return;
+  cropState.zoom = Number(event.target.value);
+  $('cropZoomValue').textContent = `${Math.round(cropState.zoom * 100)}%`;
+  paintCrop($('cropCanvas'));
 });
-$('logoFile').addEventListener('change', async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8_000_000) { toast('Use JPG, PNG ou WebP com até 8 MB.'); return; }
-  const url = URL.createObjectURL(file);
+$('cropViewport').addEventListener('pointerdown', (event) => {
+  if (!cropState || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  cropPointer = {id:event.pointerId,x:event.clientX,y:event.clientY,offsetX:cropState.offsetX,offsetY:cropState.offsetY};
+  event.currentTarget.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+$('cropViewport').addEventListener('pointermove', (event) => {
+  if (!cropState || !cropPointer || cropPointer.id !== event.pointerId) return;
+  const width = event.currentTarget.getBoundingClientRect().width;
+  const factor = $('cropCanvas').width / width;
+  cropState.offsetX = cropPointer.offsetX + (event.clientX-cropPointer.x)*factor;
+  cropState.offsetY = cropPointer.offsetY + (event.clientY-cropPointer.y)*factor;
+  paintCrop($('cropCanvas'));
+});
+for (const type of ['pointerup','pointercancel','lostpointercapture']) $('cropViewport').addEventListener(type, () => { cropPointer = null; });
+$('cropViewport').addEventListener('keydown', (event) => {
+  if (!cropState || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
+  const step = event.shiftKey ? 20 : 5;
+  cropState.offsetX += event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+  cropState.offsetY += event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+  paintCrop($('cropCanvas'));
+  event.preventDefault();
+});
+for (const id of ['cropClose','cropCancel']) $(id).addEventListener('click', () => $('cropDialog').close());
+$('cropDialog').addEventListener('close', () => {
+  if (cropState) URL.revokeObjectURL(cropState.url);
+  cropState = null; cropPointer = null;
+});
+$('cropApply').addEventListener('click', () => {
+  if (!cropState) return;
   try {
-    const image = new Image(); image.src = url; await image.decode();
-    const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 180;
-    const scale = Math.min(300 / image.width, 180 / image.height);
-    const width = image.width * scale, height = image.height * scale;
-    canvas.getContext('2d').drawImage(image, (300-width)/2, (180-height)/2, width, height);
-    state.logoData = canvas.toDataURL('image/png');
-    $('logoUrl').value = '';
-    $('logoStatus').textContent = `Logo enviado: ${file.name.slice(0, 36)}`;
-    render(); toast('Logo aplicado à assinatura.');
-  } catch { toast('Não foi possível abrir este logo.'); }
-  finally { URL.revokeObjectURL(url); event.target.value = ''; }
+    const canvas = document.createElement('canvas');
+    canvas.width = $('cropCanvas').width; canvas.height = $('cropCanvas').height;
+    paintCrop(canvas);
+    const data = canvas.toDataURL('image/png'), mode = cropState.mode, name = cropState.name;
+    if (mode === 'photo') {
+      selectPhoto(data);
+      try {
+        const items = [{id:crypto.randomUUID(),name,data},...getLibrary()].slice(0,8);
+        localStorage.setItem(libraryKey, JSON.stringify(items));
+        renderLibrary(); toast('Foto recortada e salva na biblioteca local.');
+      } catch { toast('Foto aplicada. O navegador não permitiu salvá-la na biblioteca.'); }
+    } else {
+      state.logoData = data; $('logoUrl').value = '';
+      $('logoStatus').textContent = `Logo enviado: ${name.slice(0,36)}`;
+      render(); toast('Logo ajustado e aplicado à assinatura.');
+    }
+    $('cropDialog').close();
+  } catch { toast('Não foi possível aplicar o recorte. Tente outra imagem.'); }
 });
 $('removeLogo').addEventListener('click', () => { state.logoData = ''; $('logoUrl').value = ''; $('logoStatus').textContent = 'Usando iniciais da empresa'; render(); });
 document.querySelectorAll('[data-icon-style]').forEach((button) => button.addEventListener('click', () => {

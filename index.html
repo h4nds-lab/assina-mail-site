@@ -147,5 +147,13 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca, confira a prévia e copie ou exporte o HTML.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>Para fotos e logos aparecerem para quem recebe, use uma URL pública da imagem.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
+  <dialog id="cropDialog" class="crop-dialog" aria-labelledby="cropTitle" aria-describedby="cropDescription">
+    <div class="crop-header"><div><span class="section-kicker">AJUSTAR IMAGEM</span><h2 id="cropTitle">Recortar foto</h2></div><button id="cropClose" class="crop-close" type="button" aria-label="Fechar editor de imagem">×</button></div>
+    <p id="cropDescription" class="crop-description">Arraste a imagem para escolher o enquadramento.</p>
+    <div id="cropRatios" class="crop-ratios" aria-label="Formato do logo" hidden><button type="button" data-crop-ratio="original">Original</button><button type="button" data-crop-ratio="horizontal">Horizontal</button><button type="button" data-crop-ratio="square">Quadrado</button></div>
+    <div id="cropViewport" class="crop-viewport photo" role="group" tabindex="0" aria-label="Prévia do recorte. Arraste para reposicionar ou use as setas do teclado."><canvas id="cropCanvas" width="320" height="320" aria-hidden="true"></canvas><span class="crop-mask" aria-hidden="true"></span></div>
+    <label class="crop-zoom">Zoom <input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom da imagem"><output id="cropZoomValue">100%</output></label>
+    <div class="crop-actions"><button id="cropCancel" class="outline-button" type="button">Cancelar</button><button id="cropApply" class="export-button" type="button">Aplicar recorte</button></div>
+  </dialog>
 </body>
 </html>
