@@ -188,67 +188,160 @@ function normalizeHex(value) {
   if (/^[0-9a-f]{3}$/i.test(hex)) return `#${[...hex].map((part) => part + part).join('').toUpperCase()}`;
   return /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toUpperCase()}` : null;
 }
-function syncHexControls() {
+function hexToRgb(hex) { return [1,3,5].map((index) => parseInt(hex.slice(index,index+2),16)); }
+function rgbToHex(rgb) { return `#${rgb.map((part) => Math.round(part).toString(16).padStart(2,'0')).join('').toUpperCase()}`; }
+function rgbToHsv([red,green,blue]) {
+  const r = red/255, g = green/255, b = blue/255, max = Math.max(r,g,b), min = Math.min(r,g,b), delta = max-min;
+  let hue = 0;
+  if (delta) hue = max === r ? ((g-b)/delta)%6 : max === g ? (b-r)/delta+2 : (r-g)/delta+4;
+  return {h:(hue*60+360)%360,s:max ? delta/max : 0,v:max};
+}
+function hsvToRgb({h,s,v}) {
+  const chroma = v*s, section = h/60, second = chroma*(1-Math.abs(section%2-1)), shift = v-chroma;
+  const colors = section < 1 ? [chroma,second,0] : section < 2 ? [second,chroma,0] : section < 3 ? [0,chroma,second] : section < 4 ? [0,second,chroma] : section < 5 ? [second,0,chroma] : [chroma,0,second];
+  return colors.map((part) => (part+shift)*255);
+}
+let activeColorInput = null, activeColorTrigger = null, colorHsv = {h:0,s:1,v:1}, colorIntensity = 100, updatingColorPicker = false, copiedColorTimer;
+const colorPopover = document.createElement('div');
+colorPopover.id = 'colorPopover';
+colorPopover.className = 'color-popover';
+colorPopover.hidden = true;
+colorPopover.setAttribute('role','dialog');
+colorPopover.setAttribute('aria-label','Escolher cor');
+colorPopover.innerHTML = `<div class="color-plane" id="colorPlane" role="slider" tabindex="0" aria-label="Saturação e brilho" aria-valuemin="0" aria-valuemax="100"><span class="color-plane-cursor" id="colorPlaneCursor"></span></div><div class="color-sliders"><button id="colorEyedropper" type="button" class="color-eyedropper" aria-label="Selecionar cor da tela" title="Selecionar cor da tela"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.5-1.2L19.7 7.6a2.1 2.1 0 0 0-3-3L5.5 15.8 4 20Z"/><path d="m12 9 3 3"/></svg></button><div class="color-slider-stack"><input id="colorHue" type="range" min="0" max="360" value="0" aria-label="Matiz"><input id="colorIntensity" type="range" min="0" max="100" value="100" aria-label="Intensidade da cor"></div></div><div class="color-output"><span class="color-format">HEX⌄</span><input id="colorHex" type="text" inputmode="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Código hexadecimal da cor"><span id="colorPercent" class="color-percent">100%</span><button id="colorCopy" type="button" class="color-copy" aria-label="Copiar código hexadecimal" title="Copiar código hexadecimal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button><span class="color-copied" role="status" aria-live="polite">✓ Copiado!</span></div><p class="color-note">Intensidade clareia a cor, mantendo o HEX compatível com e-mail.</p>`;
+document.body.append(colorPopover);
+function updateColorPopover() {
+  if (!activeColorInput) return;
+  const hueColor = `hsl(${colorHsv.h} 100% 50%)`;
+  $('colorPlane').style.setProperty('--hue-color',hueColor);
+  $('colorPlaneCursor').style.left = `${colorHsv.s*100}%`;
+  $('colorPlaneCursor').style.top = `${(1-colorHsv.v)*100}%`;
+  $('colorPlane').setAttribute('aria-valuenow',String(Math.round(colorHsv.s*100)));
+  $('colorPlane').setAttribute('aria-valuetext',`Saturação ${Math.round(colorHsv.s*100)}%, brilho ${Math.round(colorHsv.v*100)}%`);
+  $('colorHue').value = String(Math.round(colorHsv.h));
+  $('colorIntensity').value = String(colorIntensity);
+  $('colorIntensity').style.setProperty('--intensity-color',rgbToHex(hsvToRgb(colorHsv)));
+  $('colorPercent').textContent = `${colorIntensity}%`;
+  $('colorHex').value = activeColorInput.value.toUpperCase();
+}
+function syncColorTriggers(preservePicker = false) {
   for (const id of Object.keys(colorLabels)) {
-    const output = document.querySelector(`[data-hex-for="${id}"]`);
-    if (output) output.value = $(id).value.toUpperCase();
+    const trigger = document.querySelector(`[data-color-trigger="${id}"]`);
+    if (trigger) { trigger.style.setProperty('--current-color',$(id).value); trigger.querySelector('.color-trigger-code').textContent = $(id).value.toUpperCase(); }
+  }
+  if (activeColorInput && !updatingColorPicker && !preservePicker) {
+    colorHsv = rgbToHsv(hexToRgb(activeColorInput.value)); colorIntensity = 100;
+    updateColorPopover();
   }
 }
-function setupHexControls() {
+function applyColorFromPopover() {
+  if (!activeColorInput) return;
+  const blend = colorIntensity/100;
+  const rgb = hsvToRgb(colorHsv).map((channel) => channel*blend + 255*(1-blend));
+  activeColorInput.value = rgbToHex(rgb);
+  updatingColorPicker = true;
+  activeColorInput.dispatchEvent(new Event('input',{bubbles:true}));
+  updatingColorPicker = false;
+  syncColorTriggers(true); updateColorPopover();
+}
+function positionColorPopover() {
+  if (colorPopover.hidden || !activeColorTrigger) return;
+  const box = activeColorTrigger.getBoundingClientRect(), width = Math.min(310,window.innerWidth-20), height = colorPopover.offsetHeight;
+  colorPopover.style.width = `${width}px`;
+  colorPopover.style.left = `${Math.max(10,Math.min(box.left,window.innerWidth-width-10))}px`;
+  colorPopover.style.top = `${box.bottom+8+height <= window.innerHeight ? box.bottom+8 : Math.max(8,box.top-height-8)}px`;
+}
+function closeColorPopover() {
+  colorPopover.hidden = true;
+  if (activeColorTrigger) activeColorTrigger.setAttribute('aria-expanded','false');
+  activeColorInput = null; activeColorTrigger = null;
+}
+function setupColorPicker() {
   for (const [id,label] of Object.entries(colorLabels)) {
-    const picker = $(id);
-    const row = document.createElement('div');
-    row.className = 'hex-control';
-    row.innerHTML = `<span class="hex-prefix" aria-hidden="true">HEX</span><input data-hex-for="${id}" type="text" inputmode="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Código hexadecimal da ${label}"><button type="button" class="hex-copy" aria-label="Copiar código hexadecimal da ${label}" title="Copiar código hexadecimal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg><span>Copiar</span></button><span class="hex-copied" role="status" aria-live="polite">✓ Copiado!</span>`;
-    if (id === 'accentColor') picker.closest('.swatches').after(row);
-    else {
-      const field = picker.closest('.field');
-      const wrapper = document.createElement('div');
-      wrapper.className = 'color-field';
-      field.before(wrapper);
-      wrapper.append(field,row);
+    const source = $(id), trigger = document.createElement('button');
+    trigger.type = 'button'; trigger.className = 'color-trigger'; trigger.dataset.colorTrigger = id;
+    trigger.setAttribute('aria-label',`Selecionar ${label}`); trigger.setAttribute('aria-haspopup','dialog'); trigger.setAttribute('aria-expanded','false');
+    trigger.innerHTML = '<span class="color-trigger-swatch"></span><span class="color-trigger-code"></span><span class="color-trigger-chevron">⌄</span>';
+    if (id === 'accentColor') {
+      const oldLabel = source.closest('.custom-color');
+      oldLabel.after(trigger); oldLabel.classList.add('color-source-label');
+    } else {
+      const field = source.closest('.field'), wrapper = document.createElement('div');
+      wrapper.className = 'color-field'; field.before(wrapper); wrapper.append(field);
+      field.htmlFor = `colorTrigger-${id}`; wrapper.append(source,trigger);
     }
-    const output = row.querySelector('input');
-    const commit = () => {
-      const hex = normalizeHex(output.value);
-      if (!hex) { output.value = picker.value.toUpperCase(); output.setCustomValidity(''); return false; }
-      picker.value = hex;
-      picker.dispatchEvent(new Event('input',{bubbles:true}));
-      output.value = hex;
-      return true;
-    };
-    output.addEventListener('input', () => {
-      const hex = normalizeHex(output.value);
-      output.setCustomValidity(hex || !output.value.trim() ? '' : 'Digite uma cor como #6956E8.');
-      if (/^#?[0-9a-f]{6}$/i.test(output.value.trim())) commit();
-    });
-    output.addEventListener('blur', commit);
-    output.addEventListener('keydown', (event) => { if (event.key === 'Enter') { commit(); output.blur(); } });
-    picker.addEventListener('input', () => { output.value = picker.value.toUpperCase(); output.setCustomValidity(''); });
-    let copiedTimer;
-    row.querySelector('.hex-copy').addEventListener('click', async () => {
-      commit();
-      const hex = picker.value.toUpperCase();
-      try {
-        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(hex);
-        else {
-          const fallback = document.createElement('textarea');
-          fallback.value = hex; fallback.style.position = 'fixed'; fallback.style.opacity = '0';
-          document.body.append(fallback); fallback.select();
-          const copied = document.execCommand('copy'); fallback.remove();
-          if (!copied) throw new Error('clipboard unavailable');
-        }
-        row.classList.remove('just-copied');
-        void row.offsetWidth;
-        row.classList.add('just-copied');
-        clearTimeout(copiedTimer);
-        copiedTimer = setTimeout(() => row.classList.remove('just-copied'), 1800);
-      } catch { toast('Não foi possível copiar. Selecione o código HEX e copie manualmente.'); }
+    trigger.id = `colorTrigger-${id}`;
+    source.classList.add('color-source');
+    source.addEventListener('input',() => syncColorTriggers());
+    trigger.addEventListener('click', () => {
+      if (activeColorInput === source && !colorPopover.hidden) { closeColorPopover(); return; }
+      if (activeColorTrigger) activeColorTrigger.setAttribute('aria-expanded','false');
+      activeColorInput = source; activeColorTrigger = trigger; trigger.setAttribute('aria-expanded','true');
+      colorHsv = rgbToHsv(hexToRgb(source.value)); colorIntensity = 100;
+      colorPopover.classList.remove('just-copied');
+      colorPopover.setAttribute('aria-label',`Escolher ${label}`);
+      colorPopover.hidden = false; updateColorPopover(); positionColorPopover();
     });
   }
-  syncHexControls();
+  syncColorTriggers();
 }
-setupHexControls();
+setupColorPicker();
+const colorPlane = $('colorPlane');
+function moveColorPlane(event) {
+  const rect = colorPlane.getBoundingClientRect();
+  colorHsv.s = Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+  colorHsv.v = 1-Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height));
+  applyColorFromPopover();
+}
+colorPlane.addEventListener('pointerdown', (event) => { colorPlane.setPointerCapture(event.pointerId); moveColorPlane(event); event.preventDefault(); });
+colorPlane.addEventListener('pointermove', (event) => { if (colorPlane.hasPointerCapture(event.pointerId)) moveColorPlane(event); });
+colorPlane.addEventListener('keydown', (event) => {
+  const step = event.shiftKey ? .1 : .02;
+  if (event.key === 'ArrowLeft') colorHsv.s = Math.max(0,colorHsv.s-step);
+  else if (event.key === 'ArrowRight') colorHsv.s = Math.min(1,colorHsv.s+step);
+  else if (event.key === 'ArrowUp') colorHsv.v = Math.min(1,colorHsv.v+step);
+  else if (event.key === 'ArrowDown') colorHsv.v = Math.max(0,colorHsv.v-step);
+  else return;
+  applyColorFromPopover(); event.preventDefault();
+});
+$('colorHue').addEventListener('input', (event) => { colorHsv.h = Number(event.target.value); applyColorFromPopover(); });
+$('colorIntensity').addEventListener('input', (event) => { colorIntensity = Number(event.target.value); applyColorFromPopover(); });
+function commitColorHex() {
+  if (!activeColorInput) return;
+  const input = $('colorHex'), hex = normalizeHex(input.value);
+  if (!hex) { input.value = activeColorInput.value.toUpperCase(); input.setCustomValidity(''); return; }
+  activeColorInput.value = hex;
+  activeColorInput.dispatchEvent(new Event('input',{bubbles:true}));
+  syncColorTriggers(); input.setCustomValidity('');
+}
+$('colorHex').addEventListener('input', (event) => {
+  const hex = normalizeHex(event.target.value);
+  event.target.setCustomValidity(hex || !event.target.value.trim() ? '' : 'Digite uma cor como #6956E8.');
+  if (/^#?[0-9a-f]{6}$/i.test(event.target.value.trim())) commitColorHex();
+});
+$('colorHex').addEventListener('blur',commitColorHex);
+$('colorHex').addEventListener('keydown', (event) => { if (event.key === 'Enter') { commitColorHex(); event.target.blur(); } });
+$('colorEyedropper').disabled = !('EyeDropper' in window);
+$('colorEyedropper').addEventListener('click', async () => {
+  if (!window.EyeDropper || !activeColorInput) return;
+  try { const result = await new EyeDropper().open(); $('colorHex').value = result.sRGBHex; commitColorHex(); }
+  catch (error) { if (error.name !== 'AbortError') toast('O conta-gotas não pôde selecionar a cor.'); }
+});
+$('colorCopy').addEventListener('click', async () => {
+  if (!activeColorInput) return;
+  commitColorHex();
+  try {
+    const hex = activeColorInput.value.toUpperCase();
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(hex);
+    else { const fallback = document.createElement('textarea'); fallback.value = hex; fallback.style.position = 'fixed'; fallback.style.opacity = '0'; document.body.append(fallback); fallback.select(); const copied = document.execCommand('copy'); fallback.remove(); if (!copied) throw new Error('clipboard unavailable'); }
+    colorPopover.classList.remove('just-copied'); void colorPopover.offsetWidth; colorPopover.classList.add('just-copied');
+    clearTimeout(copiedColorTimer); copiedColorTimer = setTimeout(() => colorPopover.classList.remove('just-copied'),1800);
+  } catch { toast('Não foi possível copiar. Selecione o código HEX e copie manualmente.'); }
+});
+document.addEventListener('pointerdown', (event) => { if (!colorPopover.hidden && !colorPopover.contains(event.target) && !activeColorTrigger?.contains(event.target)) closeColorPopover(); });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !colorPopover.hidden) { closeColorPopover(); event.preventDefault(); } });
+window.addEventListener('resize',positionColorPopover);
+document.addEventListener('scroll', () => { if (!colorPopover.hidden) closeColorPopover(); },true);
 
 document.querySelectorAll('.editor-tab').forEach((button) => button.addEventListener('click', () => showTab(button.dataset.tab)));
 $('nextButton').addEventListener('click', () => {
@@ -285,7 +378,7 @@ document.querySelectorAll('.custom-font').forEach((select) => { select.innerHTML
 function syncCustomControls() {
   document.querySelectorAll('[data-grid-slot]').forEach((select) => { select.value = state.custom.order[Number(select.dataset.gridSlot)]; });
   for (const [id,key] of Object.entries({customAlign:'align',customBg:'background',customRadius:'radius',customBorderWidth:'borderWidth',customBorderColor:'borderColor',customIconMode:'iconMode',customIconColor:'iconColor',customPhotoSize:'photoSize',customLogoSize:'logoSize',customNameFont:'nameFont',customNameSize:'nameSize',customRoleFont:'roleFont',customRoleSize:'roleSize',customContactFont:'contactFont',customContactSize:'contactSize'})) $(id).value = state.custom[key];
-  syncHexControls();
+  syncColorTriggers();
   $('photoSizeValue').textContent = `${state.custom.photoSize} px`;
   $('logoSizeValue').textContent = `${state.custom.logoSize} px`;
   $('radiusValue').textContent = `${state.custom.radius} px`;
@@ -316,7 +409,7 @@ for (const [id,key] of Object.entries({customAlign:'align',customBg:'background'
 $('saveCustomTemplate').addEventListener('click', () => $('exportTemplate').click());
 document.querySelectorAll('.swatch').forEach((button) => button.addEventListener('click', () => {
   state.color = button.dataset.color; $('accentColor').value = state.color;
-  syncHexControls();
+  syncColorTriggers();
   document.querySelectorAll('.swatch').forEach((swatch) => { const selected = swatch === button; swatch.classList.toggle('selected', selected); swatch.setAttribute('aria-pressed', String(selected)); });
   render();
 }));
@@ -638,7 +731,7 @@ $('importTemplate').addEventListener('change', async (event) => {
     document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
     document.querySelectorAll('.emoji-option').forEach((button) => button.classList.remove('selected'));
     $('accentColor').value = state.color;
-    syncHexControls();
+    syncColorTriggers();
     document.querySelectorAll('.template-card').forEach((button) => { const selected = button.dataset.template === state.template; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });
     document.querySelectorAll('.swatch').forEach((button) => { const selected = button.dataset.color === state.color; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });
     document.querySelectorAll('[data-icon-style]').forEach((button) => { const selected = button.dataset.iconStyle === state.iconStyle; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });
