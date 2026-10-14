@@ -52,8 +52,12 @@ async function prepareContactIcons() {
     iconCache.set(key, canvas.toDataURL('image/png'));
   }));
 }
-function contactIcon(kind, color, size, forceColor = false) {
+function contactIcon(kind, color, size, forceColor = false, profile = 'full') {
   if (state.iconStyle === 'none') return '';
+  if (profile !== 'full') {
+    if (kind === 'linkedin' || kind === 'instagram') return '';
+    return `<span style="display:inline-block;width:18px;color:${color};font-family:Arial,sans-serif;font-size:${Math.max(12,size)}px;text-align:center;vertical-align:middle">${contactGlyphs[kind] || ''}</span>`;
+  }
   const cached = iconCache.get(`${state.iconStyle}:${iconColor(kind,color,forceColor)}:${kind}`);
   if (cached) return `<img src="${cached}" alt="" width="18" height="18" style="display:inline-block;width:18px;height:18px;border:0;vertical-align:middle">`;
   const glyph = contactGlyphs[kind] || '';
@@ -64,7 +68,7 @@ function contactIcon(kind, color, size, forceColor = false) {
 }
 const signatureTable = (content, extra = '') => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;min-width:440px;max-width:540px;border-collapse:collapse;background:#ffffff;${extra}">${content}</table>`;
 
-function makeSignature() {
+function makeSignature(profile = 'full') {
   const name = value('name');
   const role = value('role');
   const company = value('company');
@@ -72,8 +76,8 @@ function makeSignature() {
   const phone = value('phone');
   const website = safeUrl(value('website'));
   const address = value('address');
-  const image = safeUrl(value('imageUrl')) || state.imageData;
-  const logo = safeUrl(value('logoUrl')) || state.logoData;
+  const image = safeUrl(value('imageUrl')) || (profile === 'full' ? state.imageData : '');
+  const logo = safeUrl(value('logoUrl')) || (profile === 'full' ? state.logoData : '');
   const linkedin = safeUrl(value('linkedin'));
   const instagram = safeUrl(value('instagram'));
   const tagline = value('tagline');
@@ -90,9 +94,9 @@ function makeSignature() {
     website && {href:website, label:new URL(website).hostname.replace(/^www\./, ''), icon:'website'},
     address && {label:address, icon:'address'}
   ].filter(Boolean);
-  const contactRows = contact.length ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:11px;width:100%">${contact.map((item) => `<tr>${state.iconStyle === 'none' ? '' : td(contactIcon(item.icon, color, size), 'width:24px;vertical-align:top;padding:2px 0 3px')}${td(item.href ? `<a href="${escapeHtml(item.href)}" style="${base};color:#3c465b;text-decoration:none;overflow-wrap:anywhere">${escapeHtml(item.label)}</a>` : `<span style="${base};overflow-wrap:break-word">${escapeHtml(item.label)}</span>`, 'vertical-align:top;padding:2px 0 3px')}</tr>`).join('')}</table>` : '';
+  const contactRows = contact.length ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:11px;width:100%">${contact.map((item) => `<tr>${state.iconStyle === 'none' ? '' : td(contactIcon(item.icon, color, size, false, profile), 'width:24px;vertical-align:top;padding:2px 0 3px')}${td(item.href ? `<a href="${escapeHtml(item.href)}" style="${base};color:#3c465b;text-decoration:none;overflow-wrap:anywhere">${escapeHtml(item.label)}</a>` : `<span style="${base};overflow-wrap:break-word">${escapeHtml(item.label)}</span>`, 'vertical-align:top;padding:2px 0 3px')}</tr>`).join('')}</table>` : '';
   const socials = [linkedin && {href:linkedin,label:'LinkedIn',icon:'linkedin'}, instagram && {href:instagram,label:'Instagram',icon:'instagram'}].filter(Boolean);
-  const socialsRow = socials.length ? `<div style="margin-top:9px">${socials.map((item) => `<a href="${escapeHtml(item.href)}" style="display:inline-block;margin:0 8px 4px 0;padding:4px 7px;border:1px solid #dfe2eb;border-radius:4px;color:#3d465a;text-decoration:none;font-family:${font};font-size:${size-2}px;font-weight:700;white-space:nowrap">${state.iconStyle === 'none' ? '' : `${contactIcon(item.icon,color,size)}&nbsp;`}${item.label}</a>`).join('')}</div>` : '';
+  const socialsRow = socials.length ? `<div style="margin-top:9px">${socials.map((item) => `<a href="${escapeHtml(item.href)}" style="display:inline-block;margin:0 8px 4px 0;padding:4px 7px;border:1px solid #dfe2eb;border-radius:4px;color:#3d465a;text-decoration:none;font-family:${font};font-size:${size-2}px;font-weight:700;white-space:nowrap">${state.iconStyle === 'none' || profile !== 'full' ? '' : `${contactIcon(item.icon,color,size,false,profile)}&nbsp;`}${item.label}</a>`).join('')}</div>` : '';
   const accent = accentOptions.find((item) => item.id === state.accentIcon);
   const taglineRow = tagline ? `<div style="margin-top:11px;font-style:italic;${base}">${accent ? `<span style="color:${color};margin-right:5px">${accent.glyph}</span>` : ''}${escapeHtml(tagline)}</div>` : '';
   const initials = (name || 'A').split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase() || '').join('');
@@ -135,8 +139,8 @@ function makeSignature() {
       const customName = name ? `<div style="font-family:${custom.nameFont};font-size:${custom.nameSize}px;font-weight:700;line-height:1.2;color:${emphasis};overflow-wrap:break-word">${escapeHtml(name)}</div>` : '';
       const customRole = role ? `<div style="font-family:${custom.roleFont};font-size:${custom.roleSize}px;font-weight:600;color:${textColor};margin-top:4px">${escapeHtml(role)}</div>` : '';
       const customCompany = company ? `<div style="font-family:${custom.roleFont};font-size:${custom.roleSize-1}px;color:${textColor};margin-top:2px">${escapeHtml(company)}</div>` : '';
-      const customContact = contact.length ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:11px;${align === 'right' ? 'margin-left:auto' : ''}">${contact.map((item) => `<tr>${align === 'left' && state.iconStyle !== 'none' ? td(contactIcon(item.icon,iconTint,custom.contactSize,true),'width:24px;padding:2px 0;vertical-align:middle') : ''}${td(item.href ? `<a href="${escapeHtml(item.href)}" style="font-family:${custom.contactFont};font-size:${custom.contactSize}px;color:${textColor};text-decoration:none;overflow-wrap:anywhere">${escapeHtml(item.label)}</a>` : `<span style="font-family:${custom.contactFont};font-size:${custom.contactSize}px;color:${textColor}">${escapeHtml(item.label)}</span>`,`padding:2px 0;text-align:${align};vertical-align:middle`)}${align === 'right' && state.iconStyle !== 'none' ? td(contactIcon(item.icon,iconTint,custom.contactSize,true),'width:24px;padding:2px 0 2px 6px;vertical-align:middle') : ''}</tr>`).join('')}</table>` : '';
-      const customSocials = socials.length ? `<div style="margin-top:9px;text-align:${align}">${socials.map((item) => `<a href="${escapeHtml(item.href)}" style="display:inline-block;margin:0 7px 4px 0;padding:4px 7px;border:1px solid ${light ? '#ffffff' : '#dfe2eb'};border-radius:4px;background:${light ? 'transparent' : '#ffffff'};color:${textColor};text-decoration:none;font-family:${custom.contactFont};font-size:${custom.contactSize-2}px;font-weight:700;white-space:nowrap">${state.iconStyle === 'none' ? '' : `${contactIcon(item.icon,iconTint,custom.contactSize,true)}&nbsp;`}${item.label}</a>`).join('')}</div>` : '';
+      const customContact = contact.length ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:11px;${align === 'right' ? 'margin-left:auto' : ''}">${contact.map((item) => `<tr>${align === 'left' && state.iconStyle !== 'none' ? td(contactIcon(item.icon,iconTint,custom.contactSize,true,profile),'width:24px;padding:2px 0;vertical-align:middle') : ''}${td(item.href ? `<a href="${escapeHtml(item.href)}" style="font-family:${custom.contactFont};font-size:${custom.contactSize}px;color:${textColor};text-decoration:none;overflow-wrap:anywhere">${escapeHtml(item.label)}</a>` : `<span style="font-family:${custom.contactFont};font-size:${custom.contactSize}px;color:${textColor}">${escapeHtml(item.label)}</span>`,`padding:2px 0;text-align:${align};vertical-align:middle`)}${align === 'right' && state.iconStyle !== 'none' ? td(contactIcon(item.icon,iconTint,custom.contactSize,true,profile),'width:24px;padding:2px 0 2px 6px;vertical-align:middle') : ''}</tr>`).join('')}</table>` : '';
+      const customSocials = socials.length ? `<div style="margin-top:9px;text-align:${align}">${socials.map((item) => `<a href="${escapeHtml(item.href)}" style="display:inline-block;margin:0 7px 4px 0;padding:4px 7px;border:1px solid ${light ? '#ffffff' : '#dfe2eb'};border-radius:4px;background:${light ? 'transparent' : '#ffffff'};color:${textColor};text-decoration:none;font-family:${custom.contactFont};font-size:${custom.contactSize-2}px;font-weight:700;white-space:nowrap">${state.iconStyle === 'none' || profile !== 'full' ? '' : `${contactIcon(item.icon,iconTint,custom.contactSize,true,profile)}&nbsp;`}${item.label}</a>`).join('')}</div>` : '';
       const customTagline = tagline ? `<div style="margin-top:9px;font-family:${custom.contactFont};font-size:${custom.contactSize}px;color:${textColor};font-style:italic;text-align:${align}">${accent ? `<span style="margin-right:5px">${accent.glyph}</span>` : ''}${escapeHtml(tagline)}</div>` : '';
       return customName + customRole + customCompany + customContact + customSocials + customTagline;
     };
@@ -157,12 +161,13 @@ function makeSignature() {
     }).join('');
     contents = signatureTable(`<tr>${cells}</tr>`,`background:${custom.background};border:${custom.borderWidth}px solid ${custom.borderColor};border-collapse:separate;border-spacing:0;border-radius:${custom.radius}px;overflow:hidden;${state.template === 'stripe' ? `border-top:5px solid ${color}` : ''}`);
   }
-  return contents;
+  return profile === 'full' ? contents : contents.replace('min-width:440px;','');
 }
 
 function render() {
   $('signaturePreview').innerHTML = makeSignature();
   prepareContactIcons().then(() => { $('signaturePreview').innerHTML = makeSignature(); }).catch((error) => { console.warn('Ícones indisponíveis', error); });
+  updateExportStatus();
 }
 function showTab(tab) {
   tabs.forEach((item) => {
@@ -655,22 +660,57 @@ $('accentIcons').addEventListener('click', (event) => {
 });
 $('helpButton').addEventListener('click', () => $('helpDialog').showModal());
 $('helpDialog').addEventListener('click', (event) => { if (event.target === $('helpDialog')) $('helpDialog').close(); });
+const exportProfiles = {gmail:'Gmail',outlook:'Outlook',other:'Apple Mail e outros',full:'HTML completo'};
+function selectedExportProfile() { return $('emailProfile').value === 'full' ? 'full' : 'compatible'; }
+function exportImageNotice() {
+  const missing = [];
+  if (state.imageData && !safeUrl(value('imageUrl'))) missing.push('foto');
+  if (state.logoData && !safeUrl(value('logoUrl'))) missing.push('logo');
+  return missing.length ? ` Imagem local (${missing.join(' e ')}) não incluída; use uma URL pública para exibi-la.` : '';
+}
+function updateExportStatus() {
+  const target = $('emailProfile').value, html = makeSignature(selectedExportProfile());
+  $('copyButton').textContent = target === 'gmail' ? 'Copiar para Gmail' : 'Copiar assinatura';
+  if (target === 'gmail') {
+    const nearLimit = html.length > 9500;
+    $('exportGuidance').textContent = `${html.length.toLocaleString('pt-BR')} de 10.000 caracteres no Gmail.${nearLimit ? ' A assinatura ainda está longa; reduza textos ou escolha outro modelo.' : ' Copie a assinatura e cole em Configurações → Assinatura.'}${exportImageNotice()}`;
+    $('exportGuidance').classList.toggle('export-warning',nearLimit || !!exportImageNotice());
+  } else if (target === 'full') {
+    $('exportGuidance').textContent = 'Inclui imagens enviadas e ícones embutidos. Esse arquivo pode ultrapassar o limite do Gmail.';
+    $('exportGuidance').classList.remove('export-warning');
+  } else {
+    $('exportGuidance').textContent = `${exportProfiles[target]}: HTML com imagens por URL e ícones leves, para copiar no editor de assinaturas.${exportImageNotice()}`;
+    $('exportGuidance').classList.toggle('export-warning',!!exportImageNotice());
+  }
+}
+$('emailProfile').addEventListener('change',updateExportStatus);
 $('copyButton').addEventListener('click', async () => {
-  await prepareContactIcons().catch(() => {});
-  const html = makeSignature();
+  const target = $('emailProfile').value;
+  if (target === 'full') await prepareContactIcons().catch(() => {});
+  const html = makeSignature(selectedExportProfile());
+  if (target === 'gmail' && html.length > 9500) { toast('Assinatura longa para o Gmail. Reduza textos ou escolha outro modelo.'); return; }
   try {
-    if (window.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([$('signaturePreview').innerText], {type:'text/plain'}) })]);
-    else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(html);
-    else throw new Error('Clipboard unavailable');
-    toast('Assinatura copiada! Cole no seu aplicativo de e-mail.');
+    const container = document.createElement('div'); container.innerHTML = html;
+    const plainText = container.innerText || container.textContent || '';
+    if (window.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([plainText], {type:'text/plain'}) })]);
+    else {
+      container.style.cssText = 'position:fixed;left:-10000px;top:0'; document.body.append(container);
+      const selection = window.getSelection(), range = document.createRange(); range.selectNodeContents(container); selection.removeAllRanges(); selection.addRange(range);
+      const copied = document.execCommand('copy'); selection.removeAllRanges(); container.remove();
+      if (!copied) throw new Error('Clipboard unavailable');
+    }
+    toast(`Assinatura para ${exportProfiles[target]} copiada. Cole no editor de assinaturas.`);
   } catch { toast('Não foi possível copiar aqui. Use “Exportar HTML”.'); }
 });
 $('exportButton').addEventListener('click', async () => {
-  await prepareContactIcons().catch(() => {});
-  const fontLink = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Manrope:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap">';
-  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Assinatura de ${escapeHtml(value('name') || 'e-mail')}</title>${fontLink}</head><body style="margin:24px;background:#ffffff">${makeSignature()}</body></html>`;
+  const target = $('emailProfile').value;
+  if (target === 'full') await prepareContactIcons().catch(() => {});
+  const signature = makeSignature(selectedExportProfile());
+  if (target === 'gmail' && signature.length > 9500) { toast('Assinatura longa para o Gmail. Reduza textos ou escolha outro modelo.'); return; }
+  const fontLink = target === 'full' ? '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Manrope:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap">' : '';
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Assinatura de ${escapeHtml(value('name') || 'e-mail')}</title>${fontLink}</head><body style="margin:24px;background:#ffffff">${signature}</body></html>`;
   const url = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
-  const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'minha-assinatura.html'; document.body.append(anchor); anchor.click(); anchor.remove();
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = `minha-assinatura-${target}.html`; document.body.append(anchor); anchor.click(); anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast('Arquivo HTML exportado com sucesso.');
 });

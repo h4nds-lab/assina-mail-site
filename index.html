@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261014-picker1">
-  <script src="script.js?v=20261014-picker1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261014-email1">
+  <script src="script.js?v=20261014-email1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -137,7 +137,8 @@
             </div>
             <div class="stage-caption"><span class="sparkle">✦</span> É assim que sua assinatura aparece no e-mail <span class="mobile-preview-hint">· Deslize para ver toda a assinatura</span></div>
           </div>
-          <div class="export-card"><div class="export-copy"><div><strong>Assinatura pronta</strong><p>Exporte o HTML ou copie a assinatura formatada.</p></div></div><div class="export-actions"><button type="button" id="copyButton" class="copy-button">Copiar assinatura</button><button type="button" id="exportButton" class="export-button">Exportar HTML</button></div></div>
+          <div class="export-card"><div class="export-copy"><div><strong>Assinatura pronta</strong><p>Escolha seu aplicativo antes de copiar ou exportar.</p></div></div><div class="export-actions"><button type="button" id="copyButton" class="copy-button">Copiar assinatura</button><button type="button" id="exportButton" class="export-button">Exportar HTML</button></div></div>
+          <div class="export-profile"><label for="emailProfile">Usar no</label><select id="emailProfile"><option value="gmail">Gmail · compacto</option><option value="outlook">Outlook</option><option value="other">Apple Mail e outros</option><option value="full">HTML completo · arquivo</option></select><p id="exportGuidance" role="status" aria-live="polite"></p></div>
           <div class="template-transfer"><div><strong>Modelos da equipe</strong><p>Salve seu grid e a identidade da empresa. Cada pessoa importa o arquivo e preenche seus próprios dados.</p></div><div class="template-transfer-actions"><button type="button" id="exportTemplate" class="outline-button">Salvar modelo</button><label class="upload-template">Importar modelo<input id="importTemplate" type="file" accept=".json,application/json" hidden></label></div></div>
           <p class="privacy-note">✧ Seus dados ficam apenas neste navegador durante a edição.</p>
         </section>
@@ -146,7 +147,7 @@
     </main>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca, confira a prévia e copie ou exporte o HTML.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>Para fotos e logos aparecerem para quem recebe, use uma URL pública da imagem.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
+  <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca, confira a prévia e escolha o aplicativo de e-mail antes de copiar ou exportar.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>O Gmail limita a assinatura a 10 mil caracteres. Para fotos e logos nos formatos compatíveis, use uma URL pública da imagem; uploads locais ficam apenas no HTML completo.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
   <section id="cropDialog" class="crop-dialog" aria-labelledby="cropTitle" aria-describedby="cropDescription" hidden>
     <div class="crop-header"><div><span class="section-kicker">AJUSTAR IMAGEM</span><h2 id="cropTitle">Recortar foto</h2></div><button id="cropClose" class="crop-close" type="button" aria-label="Fechar editor de imagem">×</button></div>
     <p id="cropDescription" class="crop-description">Arraste a imagem para escolher o enquadramento.</p>
