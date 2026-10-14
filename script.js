@@ -44,11 +44,11 @@ async function prepareContactIcons() {
     const key = `${style}:${tint}:${kind}`;
     if (iconCache.has(key)) return;
     const filled = style === 'filled';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${iconPaths[kind].viewBox || '0 0 24 24'}" width="48" height="48" fill="${filled ? tint : 'none'}" color="${tint}" stroke="${filled ? 'none' : tint}" stroke-width="${kind === 'linkedin' ? '1.4' : '2'}" stroke-linecap="round" stroke-linejoin="round">${iconPaths[kind][style]}</svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${iconPaths[kind].viewBox || '0 0 24 24'}" width="96" height="96" fill="${filled ? tint : 'none'}" color="${tint}" stroke="${filled ? 'none' : tint}" stroke-width="${kind === 'linkedin' ? '1.4' : '2'}" stroke-linecap="round" stroke-linejoin="round">${iconPaths[kind][style]}</svg>`;
     const image = new Image(); image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     await image.decode();
-    const canvas = document.createElement('canvas'); canvas.width = 48; canvas.height = 48;
-    canvas.getContext('2d').drawImage(image, 0, 0, 48, 48);
+    const canvas = document.createElement('canvas'); canvas.width = 96; canvas.height = 96;
+    canvas.getContext('2d').drawImage(image, 0, 0, 96, 96);
     iconCache.set(key, canvas.toDataURL('image/png'));
   }));
 }
@@ -678,8 +678,8 @@ function updateExportStatus() {
   }
 }
 $('emailProfile').addEventListener('change',updateExportStatus);
-async function renderSignaturePng() {
-  if (!window.htmlToImage?.toBlob) throw new Error('O gerador de imagem não carregou. Atualize a página e tente novamente.');
+async function renderSignatureGraphic(format = 'png', scale = 3) {
+  if (!window.htmlToImage?.toBlob || !window.htmlToImage?.toSvg) throw new Error('O gerador de imagem não carregou. Atualize a página e tente novamente.');
   await prepareContactIcons().catch(() => {});
   const outer = document.createElement('div');
   outer.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;z-index:-1';
@@ -690,23 +690,28 @@ async function renderSignaturePng() {
   try {
     await Promise.all([...frame.querySelectorAll('img')].map((image) => image.decode()));
     await document.fonts.ready;
+    const options = {backgroundColor:'#ffffff',pixelRatio:scale};
     let blob;
-    try { blob = await window.htmlToImage.toBlob(frame, {backgroundColor:'#ffffff',pixelRatio:1.5}); }
-    catch { blob = await window.htmlToImage.toBlob(frame, {backgroundColor:'#ffffff',pixelRatio:1.5,skipFonts:true}); }
-    if (!blob || blob.type !== 'image/png') throw new Error('Não foi possível gerar o PNG. Verifique se as imagens por URL permitem acesso público.');
+    try {
+      blob = format === 'svg' ? await (await fetch(await window.htmlToImage.toSvg(frame, options))).blob() : await window.htmlToImage.toBlob(frame, options);
+    } catch {
+      const fallback = {...options,skipFonts:true};
+      blob = format === 'svg' ? await (await fetch(await window.htmlToImage.toSvg(frame, fallback))).blob() : await window.htmlToImage.toBlob(frame, fallback);
+    }
+    if (!blob || (format === 'svg' ? !blob.type.startsWith('image/svg+xml') : blob.type !== 'image/png')) throw new Error('Não foi possível gerar a imagem. Verifique as fotos por URL.');
     return blob;
   } finally { outer.remove(); }
 }
-function savePng(blob) {
+function saveGraphic(blob, filename) {
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'minha-assinatura.png';
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename;
   document.body.append(anchor); anchor.click(); anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $('copyImageButton').addEventListener('click', async () => {
   const button = $('copyImageButton'); button.disabled = true; button.textContent = 'Preparando imagem…';
   // A gravação precisa começar no gesto do clique; o PNG pode terminar depois.
-  const png = renderSignaturePng();
+  const png = renderSignatureGraphic('png', 1.85);
   try {
     if (!window.ClipboardItem || !navigator.clipboard?.write) throw new Error('Este navegador não permite copiar PNG. Use “Baixar PNG”.');
     await navigator.clipboard.write([new ClipboardItem({'image/png':png})]);
@@ -718,9 +723,15 @@ $('copyImageButton').addEventListener('click', async () => {
 });
 $('downloadImageButton').addEventListener('click', async () => {
   const button = $('downloadImageButton'); button.disabled = true; button.textContent = 'Gerando PNG…';
-  try { savePng(await renderSignaturePng()); toast('PNG baixado. Envie-o pelo botão de imagem do Gmail.'); }
+  try { saveGraphic(await renderSignatureGraphic(), 'minha-assinatura-3x.png'); toast('PNG em alta resolução baixado. Envie-o pelo botão de imagem do Gmail.'); }
   catch (error) { toast(error.message || 'Não foi possível gerar o PNG.'); }
-  finally { button.disabled = false; button.textContent = 'Baixar PNG'; }
+  finally { button.disabled = false; button.textContent = 'Baixar PNG 3×'; }
+});
+$('downloadSvgButton').addEventListener('click', async () => {
+  const button = $('downloadSvgButton'); button.disabled = true; button.textContent = 'Gerando SVG…';
+  try { saveGraphic(await renderSignatureGraphic('svg'), 'minha-assinatura.svg'); toast('SVG baixado. Abra no navegador ou arquive; não cole no Gmail.'); }
+  catch (error) { toast(error.message || 'Não foi possível gerar o SVG.'); }
+  finally { button.disabled = false; button.textContent = 'Baixar SVG'; }
 });
 $('copyButton').addEventListener('click', async () => {
   const target = $('emailProfile').value;
