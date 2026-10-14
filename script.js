@@ -182,6 +182,74 @@ function toast(message) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => node.classList.remove('show'), 3500);
 }
 
+const colorLabels = {accentColor:'cor principal',customBg:'fundo da assinatura',customIconColor:'ícones do grid',customBorderColor:'borda',emojiBg:'fundo do emoji',socialIconColor:'logos sociais'};
+function normalizeHex(value) {
+  const hex = value.trim().replace(/^#/, '');
+  if (/^[0-9a-f]{3}$/i.test(hex)) return `#${[...hex].map((part) => part + part).join('').toUpperCase()}`;
+  return /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toUpperCase()}` : null;
+}
+function syncHexControls() {
+  for (const id of Object.keys(colorLabels)) {
+    const output = document.querySelector(`[data-hex-for="${id}"]`);
+    if (output) output.value = $(id).value.toUpperCase();
+  }
+}
+function setupHexControls() {
+  for (const [id,label] of Object.entries(colorLabels)) {
+    const picker = $(id);
+    const row = document.createElement('div');
+    row.className = 'hex-control';
+    row.innerHTML = `<span class="hex-prefix" aria-hidden="true">HEX</span><input data-hex-for="${id}" type="text" inputmode="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Código hexadecimal da ${label}"><button type="button" class="hex-copy" aria-label="Copiar código hexadecimal da ${label}" title="Copiar código hexadecimal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg><span>Copiar</span></button><span class="hex-copied" role="status" aria-live="polite">✓ Copiado!</span>`;
+    if (id === 'accentColor') picker.closest('.swatches').after(row);
+    else {
+      const field = picker.closest('.field');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'color-field';
+      field.before(wrapper);
+      wrapper.append(field,row);
+    }
+    const output = row.querySelector('input');
+    const commit = () => {
+      const hex = normalizeHex(output.value);
+      if (!hex) { output.value = picker.value.toUpperCase(); output.setCustomValidity(''); return false; }
+      picker.value = hex;
+      picker.dispatchEvent(new Event('input',{bubbles:true}));
+      output.value = hex;
+      return true;
+    };
+    output.addEventListener('input', () => {
+      const hex = normalizeHex(output.value);
+      output.setCustomValidity(hex || !output.value.trim() ? '' : 'Digite uma cor como #6956E8.');
+      if (/^#?[0-9a-f]{6}$/i.test(output.value.trim())) commit();
+    });
+    output.addEventListener('blur', commit);
+    output.addEventListener('keydown', (event) => { if (event.key === 'Enter') { commit(); output.blur(); } });
+    picker.addEventListener('input', () => { output.value = picker.value.toUpperCase(); output.setCustomValidity(''); });
+    let copiedTimer;
+    row.querySelector('.hex-copy').addEventListener('click', async () => {
+      commit();
+      const hex = picker.value.toUpperCase();
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(hex);
+        else {
+          const fallback = document.createElement('textarea');
+          fallback.value = hex; fallback.style.position = 'fixed'; fallback.style.opacity = '0';
+          document.body.append(fallback); fallback.select();
+          const copied = document.execCommand('copy'); fallback.remove();
+          if (!copied) throw new Error('clipboard unavailable');
+        }
+        row.classList.remove('just-copied');
+        void row.offsetWidth;
+        row.classList.add('just-copied');
+        clearTimeout(copiedTimer);
+        copiedTimer = setTimeout(() => row.classList.remove('just-copied'), 1800);
+      } catch { toast('Não foi possível copiar. Selecione o código HEX e copie manualmente.'); }
+    });
+  }
+  syncHexControls();
+}
+setupHexControls();
+
 document.querySelectorAll('.editor-tab').forEach((button) => button.addEventListener('click', () => showTab(button.dataset.tab)));
 $('nextButton').addEventListener('click', () => {
   const active = document.querySelector('.editor-tab.active').dataset.tab;
@@ -217,6 +285,7 @@ document.querySelectorAll('.custom-font').forEach((select) => { select.innerHTML
 function syncCustomControls() {
   document.querySelectorAll('[data-grid-slot]').forEach((select) => { select.value = state.custom.order[Number(select.dataset.gridSlot)]; });
   for (const [id,key] of Object.entries({customAlign:'align',customBg:'background',customRadius:'radius',customBorderWidth:'borderWidth',customBorderColor:'borderColor',customIconMode:'iconMode',customIconColor:'iconColor',customPhotoSize:'photoSize',customLogoSize:'logoSize',customNameFont:'nameFont',customNameSize:'nameSize',customRoleFont:'roleFont',customRoleSize:'roleSize',customContactFont:'contactFont',customContactSize:'contactSize'})) $(id).value = state.custom[key];
+  syncHexControls();
   $('photoSizeValue').textContent = `${state.custom.photoSize} px`;
   $('logoSizeValue').textContent = `${state.custom.logoSize} px`;
   $('radiusValue').textContent = `${state.custom.radius} px`;
@@ -247,6 +316,7 @@ for (const [id,key] of Object.entries({customAlign:'align',customBg:'background'
 $('saveCustomTemplate').addEventListener('click', () => $('exportTemplate').click());
 document.querySelectorAll('.swatch').forEach((button) => button.addEventListener('click', () => {
   state.color = button.dataset.color; $('accentColor').value = state.color;
+  syncHexControls();
   document.querySelectorAll('.swatch').forEach((swatch) => { const selected = swatch === button; swatch.classList.toggle('selected', selected); swatch.setAttribute('aria-pressed', String(selected)); });
   render();
 }));
@@ -568,6 +638,7 @@ $('importTemplate').addEventListener('change', async (event) => {
     document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
     document.querySelectorAll('.emoji-option').forEach((button) => button.classList.remove('selected'));
     $('accentColor').value = state.color;
+    syncHexControls();
     document.querySelectorAll('.template-card').forEach((button) => { const selected = button.dataset.template === state.template; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });
     document.querySelectorAll('.swatch').forEach((button) => { const selected = button.dataset.color === state.color; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });
     document.querySelectorAll('[data-icon-style]').forEach((button) => { const selected = button.dataset.iconStyle === state.iconStyle; button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected)); });

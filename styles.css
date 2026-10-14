@@ -123,6 +123,25 @@
 .crop-actions{display:flex;justify-content:flex-end;gap:9px}
 .crop-actions .outline-button,.crop-actions .export-button{height:38px}
 @media(max-width:480px){.crop-dialog{padding:18px}.crop-actions{justify-content:stretch}.crop-actions button{flex:1}.crop-ratios button{flex:1}}
+
+/* Código hexadecimal editável e cópia rápida para todos os seletores de cor. */
+.color-field{min-width:0}
+.color-field>.field{width:100%}
+.hex-control{position:relative;display:flex;align-items:center;gap:0;min-width:0;height:36px;margin-top:8px;border:1px solid #e3e5ed;border-radius:8px;background:#fff;transition:border-color .2s,box-shadow .2s}
+.hex-control:focus-within{border-color:#9d8ff0;box-shadow:0 0 0 3px #e9e5ff}
+.style-group>.hex-control{max-width:240px;margin-top:17px}
+.hex-prefix{flex:none;padding:0 8px 0 11px;color:#9999aa;font-size:9px;font-weight:800;letter-spacing:.07em}
+.hex-control input{width:100%;min-width:0;height:100%;padding:0 3px;border:0!important;border-radius:0!important;box-shadow:none!important;outline:none;background:transparent;color:#34384e;font:700 11px/1 'DM Sans',sans-serif;letter-spacing:.03em;text-transform:uppercase}
+.hex-control input:invalid{color:#c05252}
+.hex-copy{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;height:100%;padding:0 9px;border:0;border-left:1px solid #ececf2;border-radius:0 7px 7px 0;background:#f7f5ff;color:#6956e8;font-size:10px;font-weight:800;transition:background .2s,color .2s}
+.hex-copy:hover{background:#eee9ff}
+.hex-copy svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.hex-copied{position:absolute;z-index:2;right:0;top:-30px;padding:5px 9px;border-radius:6px;background:#2f9d74;color:#fff;white-space:nowrap;font-size:10px;font-weight:800;box-shadow:0 5px 12px #2f9d7433;opacity:0;pointer-events:none;transform:translateY(5px) scale(.92)}
+.hex-control.just-copied .hex-copied{animation:hex-copy-pop 1.8s ease forwards}
+.hex-control.just-copied .hex-copy{background:#e8f8f0;color:#238760}
+@keyframes hex-copy-pop{0%{opacity:0;transform:translateY(7px) scale(.88)}12%,72%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-5px) scale(.98)}}
+@media(prefers-reduced-motion:reduce){.hex-control.just-copied .hex-copied{animation:none;opacity:1;transform:none}}
+@media(max-width:380px){.hex-copy span{display:none}.hex-copy{padding:0 10px}}
 .social-color-field{margin:0 0 20px}.social-color-field input[type=color]{width:92px;height:38px;padding:3px;cursor:pointer}
 .customize-toggle{border:1px solid #e8e3fb;border-radius:11px;background:#f8f6ff;padding:14px;margin:0 0 19px;gap:12px}.customize-toggle strong{font-size:12px}.customize-toggle small{line-height:1.45}.customize-toggle input:disabled+.toggle-ui{opacity:.55}.customize-toggle input:disabled{cursor:default}#customizationOptions[hidden]{display:none}.emoji-picker{margin:20px 0;padding:14px;border:1px solid #ece9f5;background:#faf9ff;border-radius:12px}.emoji-picker .subsection-label{margin:0 0 5px}.emoji-picker .field-hint{margin:0 0 12px}.emoji-grid{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}.emoji-option{width:39px;height:39px;display:grid;place-items:center;border:2px solid transparent;border-radius:50%;background:var(--emoji-bg);font-size:22px;line-height:1}.emoji-option.selected{border-color:var(--purple);box-shadow:0 0 0 2px #e9e5ff}.emoji-picker input[type=color]{height:40px;padding:4px;cursor:pointer}
 .template-illustration.stripe{border-top:7px solid #9586e8;align-items:center;gap:7px}.template-illustration.stripe .mini-avatar{width:22px;height:22px}.template-illustration.stripe .mini-logo{position:static;width:19px;height:19px;flex:none;border-radius:3px;background:#c3b9f3}.template-illustration.stripe .mini-copy{min-width:0}
