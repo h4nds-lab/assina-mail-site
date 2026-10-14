@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261014-crop2">
+  <script src="script.js?v=20261014-crop2" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -103,11 +103,11 @@
 
           <div class="editor-panel" id="panel-extras" role="tabpanel" hidden>
             <div class="panel-heading"><h3>Imagens e detalhes</h3><p>Adicione sua foto, o logo da empresa e escolha os ícones.</p></div>
-            <div class="asset-section"><div class="subsection-label">Logo da empresa</div><p class="asset-description">Aparece nos modelos com área de marca. Envie um arquivo ou cole o endereço público da imagem.</p><div class="photo-actions"><label class="upload-button">↑ Enviar logo <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="removeLogo" type="button" class="subtle-button">Remover logo</button><span id="logoStatus" class="asset-status">Usando iniciais da empresa</span></div><label class="field full image-url-field">URL pública do logo<input id="logoUrl" type="url" placeholder="https://exemplo.com/logo.png"><small>Uma URL pública costuma funcionar melhor nos aplicativos de e-mail.</small></label></div>
+            <div class="asset-section"><div class="subsection-label">Logo da empresa</div><p class="asset-description">Aparece nos modelos com área de marca. Envie um arquivo ou cole o endereço público da imagem.</p><div class="photo-actions"><label class="upload-button">↑ Enviar logo <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="editLogoCrop" type="button" class="outline-button" hidden>Ajustar recorte</button><button id="removeLogo" type="button" class="subtle-button">Remover logo</button><span id="logoStatus" class="asset-status">Usando iniciais da empresa</span></div><label class="field full image-url-field">URL pública do logo<input id="logoUrl" type="url" placeholder="https://exemplo.com/logo.png"><small>Uma URL pública costuma funcionar melhor nos aplicativos de e-mail.</small></label></div>
             <div class="section-separator"></div>
             <div class="subsection-label">Foto do perfil</div>
-            <div class="photo-actions"><label class="upload-button">↑ Enviar foto <input id="photoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="libraryButton" type="button" class="outline-button">Minha biblioteca</button><button id="removePhoto" type="button" class="subtle-button">Sem foto</button></div>
-            <p class="field-hint">Fotos enviadas ficam salvas apenas neste navegador. O arquivo HTML inclui a imagem; alguns clientes de e-mail podem bloquear imagens incorporadas.</p>
+            <div class="photo-actions"><label class="upload-button">↑ Enviar foto <input id="photoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="editPhotoCrop" type="button" class="outline-button" hidden>Ajustar recorte</button><button id="libraryButton" type="button" class="outline-button">Minha biblioteca</button><button id="removePhoto" type="button" class="subtle-button">Sem foto</button></div>
+            <p class="field-hint">Ao enviar uma foto, o editor de recorte aparece aqui abaixo. Arraste para enquadrar e clique em Aplicar recorte. Fotos enviadas ficam salvas apenas neste navegador.</p>
             <div class="subsection-label">Personagens sugeridos</div>
             <div class="avatar-grid" id="avatarGrid" aria-label="Personagens sugeridos"></div>
             <div class="emoji-picker"><div class="subsection-label">Emoji com fundo colorido</div><p class="field-hint">Escolha um emoji e a cor do círculo, como em um grupo do WhatsApp.</p><div id="emojiGrid" class="emoji-grid" aria-label="Escolha um emoji"></div><div class="form-grid"><label class="field">Outro emoji<input id="emojiInput" type="text" maxlength="16" placeholder="Cole um emoji"></label><label class="field">Cor do fundo<input id="emojiBg" type="color" value="#eee8ff"></label></div></div>
@@ -147,13 +147,13 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca, confira a prévia e copie ou exporte o HTML.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>Para fotos e logos aparecerem para quem recebe, use uma URL pública da imagem.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
-  <dialog id="cropDialog" class="crop-dialog" aria-labelledby="cropTitle" aria-describedby="cropDescription">
+  <section id="cropDialog" class="crop-dialog" aria-labelledby="cropTitle" aria-describedby="cropDescription" hidden>
     <div class="crop-header"><div><span class="section-kicker">AJUSTAR IMAGEM</span><h2 id="cropTitle">Recortar foto</h2></div><button id="cropClose" class="crop-close" type="button" aria-label="Fechar editor de imagem">×</button></div>
     <p id="cropDescription" class="crop-description">Arraste a imagem para escolher o enquadramento.</p>
     <div id="cropRatios" class="crop-ratios" aria-label="Formato do logo" hidden><button type="button" data-crop-ratio="original">Original</button><button type="button" data-crop-ratio="horizontal">Horizontal</button><button type="button" data-crop-ratio="square">Quadrado</button></div>
     <div id="cropViewport" class="crop-viewport photo" role="group" tabindex="0" aria-label="Prévia do recorte. Arraste para reposicionar ou use as setas do teclado."><canvas id="cropCanvas" width="320" height="320" aria-hidden="true"></canvas><span class="crop-mask" aria-hidden="true"></span></div>
     <label class="crop-zoom">Zoom <input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom da imagem"><output id="cropZoomValue">100%</output></label>
     <div class="crop-actions"><button id="cropCancel" class="outline-button" type="button">Cancelar</button><button id="cropApply" class="export-button" type="button">Aplicar recorte</button></div>
-  </dialog>
+  </section>
 </body>
 </html>

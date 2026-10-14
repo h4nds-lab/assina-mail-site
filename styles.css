@@ -99,8 +99,8 @@
 @media(max-width:620px){.main-content{min-width:0}.editor-panel{min-width:0}.asset-section{min-width:0}.photo-actions{min-width:0}.asset-status{overflow-wrap:anywhere}.field-hint,.asset-description{overflow-wrap:anywhere}}
 
 /* Recorte de fotos e logos antes de aplicar à assinatura. */
-.crop-dialog{width:min(520px,calc(100vw - 28px));max-height:calc(100dvh - 28px);border:1px solid #e7e5ef;border-radius:18px;padding:24px;background:#fff;box-shadow:0 24px 80px #24263d30;color:var(--ink);overflow:auto}
-.crop-dialog::backdrop{background:#171626a8}
+.crop-dialog{width:100%;max-width:520px;border:1px solid #ded8f6;border-radius:14px;padding:18px;margin:12px 0 20px;background:#fbfaff;box-shadow:0 8px 22px #6956e812;color:var(--ink)}
+.crop-dialog[hidden],.photo-actions button[hidden]{display:none}
 .crop-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .crop-header h2{font:800 20px Manrope,sans-serif;margin:5px 0 0;letter-spacing:-.5px}
 .crop-close{width:30px;height:30px;border:0;border-radius:8px;background:#f3f1fa;color:#6b667f;font-size:22px;line-height:1}

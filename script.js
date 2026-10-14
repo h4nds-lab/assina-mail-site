@@ -256,11 +256,13 @@ fields.forEach((id) => {
   $(id).addEventListener('input', () => {
     if (id === 'imageUrl' && value(id)) {
       state.imageData = ''; state.avatar = ''; state.emoji = ''; $('emojiInput').value = '';
+      lastPhotoFile = null; $('editPhotoCrop').hidden = true;
       document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
       document.querySelectorAll('.emoji-option').forEach((button) => button.classList.remove('selected'));
     }
     if (id === 'logoUrl' && value(id)) {
       state.logoData = '';
+      lastLogoFile = null; $('editLogoCrop').hidden = true;
       $('logoStatus').textContent = 'Usando logo por URL';
     }
     render();
@@ -270,6 +272,7 @@ fields.forEach((id) => {
 function selectPhoto(data, avatar = '') {
   state.imageData = data;
   state.avatar = avatar;
+  lastPhotoFile = null; $('editPhotoCrop').hidden = true;
   state.emoji = '';
   $('emojiInput').value = '';
   document.querySelectorAll('.emoji-option').forEach((button) => button.classList.remove('selected'));
@@ -287,6 +290,7 @@ $('emojiGrid').innerHTML = emojiOptions.map((emoji) => `<button type="button" cl
 function selectEmoji(emoji) {
   state.emoji = emoji.trim().slice(0,16);
   state.imageData = ''; state.avatar = ''; $('imageUrl').value = '';
+  lastPhotoFile = null; $('editPhotoCrop').hidden = true;
   document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
   document.querySelectorAll('.emoji-option').forEach((button) => button.classList.toggle('selected', button.dataset.emoji === state.emoji));
   render();
@@ -325,6 +329,7 @@ $('photoLibrary').addEventListener('click', (event) => {
   if (item) { selectPhoto(item.data); toast('Foto aplicada à assinatura.'); }
 });
 let cropState = null;
+let lastPhotoFile = null, lastLogoFile = null;
 let cropPointer = null;
 function cropFrameSize(mode, ratio, image) {
   if (mode === 'photo' || ratio === 'square') return {width:320,height:320};
@@ -371,33 +376,46 @@ function resetCropFrame() {
   paintCrop(canvas);
 }
 async function openCropFile(file, mode) {
+  closeCropEditor();
   const url = URL.createObjectURL(file);
   try {
-    const image = new Image(); image.src = url; await image.decode();
+    const image = new Image();
+    await new Promise((resolve,reject) => { image.onload = resolve; image.onerror = reject; image.src = url; });
     if (!image.width || !image.height) throw new Error('empty image');
-    cropState = {image,url,mode,name:file.name.slice(0,60),ratio:'original',zoom:1,offsetX:0,offsetY:0};
+    cropState = {image,url,file,mode,name:file.name.slice(0,60),ratio:'original',zoom:1,offsetX:0,offsetY:0};
     $('cropTitle').textContent = mode === 'photo' ? 'Recortar foto do perfil' : 'Ajustar logo da empresa';
     $('cropDescription').textContent = mode === 'photo' ? 'Arraste para enquadrar o rosto no círculo. Use o zoom para aproximar.' : 'Mantenha a proporção original ou escolha um recorte. O fundo transparente do PNG é preservado.';
     $('cropRatios').hidden = mode !== 'logo';
     resetCropFrame();
-    $('cropDialog').showModal();
+    const editor = $('cropDialog');
+    $(mode === 'photo' ? 'photoFile' : 'logoFile').closest('.photo-actions').insertAdjacentElement('afterend',editor);
+    editor.hidden = false;
+    editor.scrollIntoView({block:'nearest'});
     $('cropViewport').focus();
   } catch (error) {
-    URL.revokeObjectURL(url);
-    cropState = null;
+    const needsRevoke = !cropState;
+    closeCropEditor();
+    if (needsRevoke) URL.revokeObjectURL(url);
     throw error;
   }
+}
+function closeCropEditor() {
+  $('cropDialog').hidden = true;
+  if (cropState) URL.revokeObjectURL(cropState.url);
+  cropState = null; cropPointer = null;
 }
 for (const [id,mode] of [['photoFile','photo'],['logoFile','logo']]) {
   $(id).addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
     if (!file) return;
-    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8_000_000) { toast('Use JPG, PNG ou WebP com até 8 MB.'); return; }
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8_000_000) { toast('Use JPG, PNG ou WebP com até 8 MB.'); event.target.value = ''; return; }
     try { await openCropFile(file,mode); }
     catch { toast('Não foi possível abrir esta imagem.'); }
+    finally { event.target.value = ''; }
   });
 }
+$('editPhotoCrop').addEventListener('click', () => { if (lastPhotoFile) openCropFile(lastPhotoFile,'photo').catch(() => toast('Não foi possível reabrir esta foto.')); });
+$('editLogoCrop').addEventListener('click', () => { if (lastLogoFile) openCropFile(lastLogoFile,'logo').catch(() => toast('Não foi possível reabrir este logo.')); });
 document.querySelectorAll('[data-crop-ratio]').forEach((button) => button.addEventListener('click', () => {
   if (!cropState || cropState.mode !== 'logo') return;
   cropState.ratio = button.dataset.cropRatio;
@@ -432,20 +450,18 @@ $('cropViewport').addEventListener('keydown', (event) => {
   paintCrop($('cropCanvas'));
   event.preventDefault();
 });
-for (const id of ['cropClose','cropCancel']) $(id).addEventListener('click', () => $('cropDialog').close());
-$('cropDialog').addEventListener('close', () => {
-  if (cropState) URL.revokeObjectURL(cropState.url);
-  cropState = null; cropPointer = null;
-});
+for (const id of ['cropClose','cropCancel']) $(id).addEventListener('click', closeCropEditor);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('cropDialog').hidden) closeCropEditor(); });
 $('cropApply').addEventListener('click', () => {
   if (!cropState) return;
   try {
     const canvas = document.createElement('canvas');
     canvas.width = $('cropCanvas').width; canvas.height = $('cropCanvas').height;
     paintCrop(canvas);
-    const data = canvas.toDataURL('image/png'), mode = cropState.mode, name = cropState.name;
+    const data = canvas.toDataURL('image/png'), mode = cropState.mode, name = cropState.name, file = cropState.file;
     if (mode === 'photo') {
       selectPhoto(data);
+      lastPhotoFile = file; $('editPhotoCrop').hidden = false;
       try {
         const items = [{id:crypto.randomUUID(),name,data},...getLibrary()].slice(0,8);
         localStorage.setItem(libraryKey, JSON.stringify(items));
@@ -453,13 +469,14 @@ $('cropApply').addEventListener('click', () => {
       } catch { toast('Foto aplicada. O navegador não permitiu salvá-la na biblioteca.'); }
     } else {
       state.logoData = data; $('logoUrl').value = '';
+      lastLogoFile = file; $('editLogoCrop').hidden = false;
       $('logoStatus').textContent = `Logo enviado: ${name.slice(0,36)}`;
       render(); toast('Logo ajustado e aplicado à assinatura.');
     }
-    $('cropDialog').close();
+    closeCropEditor();
   } catch { toast('Não foi possível aplicar o recorte. Tente outra imagem.'); }
 });
-$('removeLogo').addEventListener('click', () => { state.logoData = ''; $('logoUrl').value = ''; $('logoStatus').textContent = 'Usando iniciais da empresa'; render(); });
+$('removeLogo').addEventListener('click', () => { state.logoData = ''; lastLogoFile = null; $('editLogoCrop').hidden = true; $('logoUrl').value = ''; $('logoStatus').textContent = 'Usando iniciais da empresa'; render(); });
 document.querySelectorAll('[data-icon-style]').forEach((button) => button.addEventListener('click', () => {
   state.iconStyle = button.dataset.iconStyle;
   document.querySelectorAll('[data-icon-style]').forEach((option) => { const selected = option === button; option.classList.toggle('selected', selected); option.setAttribute('aria-pressed', String(selected)); });
@@ -547,6 +564,7 @@ $('importTemplate').addEventListener('change', async (event) => {
     $('logoStatus').textContent = state.logoData ? 'Logo importado do modelo' : value('logoUrl') ? 'Usando logo por URL' : 'Usando iniciais da empresa';
     for (const id of ['name','role','email','phone','imageUrl']) $(id).value = '';
     state.imageData = ''; state.avatar = ''; state.emoji = ''; $('emojiInput').value = '';
+    lastPhotoFile = null; lastLogoFile = null; $('editPhotoCrop').hidden = true; $('editLogoCrop').hidden = true;
     document.querySelectorAll('.avatar-option').forEach((button) => button.classList.remove('selected'));
     document.querySelectorAll('.emoji-option').forEach((button) => button.classList.remove('selected'));
     $('accentColor').value = state.color;
