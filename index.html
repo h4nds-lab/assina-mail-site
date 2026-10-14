@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7fb">
+  <meta name="description" content="Crie uma assinatura de e-mail profissional, personalize cada detalhe e exporte o HTML em segundos.">
+  <title>Assina — Criador de assinatura de e-mail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <main id="top" class="main-content">
+      <header class="topbar">
+        <div class="brand-word">assina<span>.</span></div>
+        <div class="product-credit">Produto gratuito por <strong>Truffle Hunters</strong></div>
+      </header>
+
+      <div class="page-heading">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-line"></span> SEU ESPAÇO CRIATIVO</div>
+          <h1>Uma assinatura que<br><em>fala por você.</em></h1>
+          <p>Crie uma assinatura profissional com a sua identidade. Ajuste os detalhes e veja o resultado na hora.</p>
+        </div>
+        <div class="heading-ornament" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="ornament-star">✳</span></div>
+      </div>
+
+      <div class="workspace">
+        <section class="editor-card" aria-labelledby="editorTitle">
+          <div class="card-header">
+            <div><span class="section-kicker">01 / PERSONALIZAR</span><h2 id="editorTitle">Sua assinatura</h2></div>
+            <span class="live-badge"><span></span> Edição ao vivo</span>
+          </div>
+
+          <div class="editor-tabs" role="tablist" aria-label="Etapas de personalização">
+            <button type="button" class="editor-tab active" role="tab" aria-selected="true" data-tab="modelos">Modelos</button>
+            <button type="button" class="editor-tab" role="tab" aria-selected="false" data-tab="dados">Seus dados</button>
+            <button type="button" class="editor-tab" role="tab" aria-selected="false" data-tab="estilo">Estilo</button>
+            <button type="button" class="editor-tab" role="tab" aria-selected="false" data-tab="personalizar">Personalizar</button>
+            <button type="button" class="editor-tab" role="tab" aria-selected="false" data-tab="extras">Imagens e ícones</button>
+          </div>
+
+          <div class="editor-panel active" id="panel-modelos" role="tabpanel">
+            <div class="panel-heading"><h3>Escolha um ponto de partida</h3><p>Use como está ou personalize qualquer modelo depois.</p></div>
+            <div class="template-grid" id="templateGrid">
+              <button type="button" class="template-card selected" data-template="classic" aria-pressed="true"><span class="template-illustration classic"><span class="mini-avatar"></span><span class="mini-copy"><i></i><i></i><i></i></span><span class="mini-logo"></span></span><span class="template-label">Perfil + marca <small>Completo</small></span><span class="selected-dot">✓</span></button>
+              <button type="button" class="template-card" data-template="modern" aria-pressed="false"><span class="template-illustration modern"><span class="mini-side"><span class="mini-avatar"></span></span><span class="mini-copy"><i></i><i></i><i></i></span><span class="mini-logo"></span></span><span class="template-label">Faixa lateral <small>Marcante</small></span><span class="selected-dot">✓</span></button>
+              <button type="button" class="template-card" data-template="minimal" aria-pressed="false"><span class="template-illustration minimal"><span class="mini-copy"><i></i><i></i><i></i></span><span class="mini-logo"></span></span><span class="template-label">Essencial <small>Leve</small></span><span class="selected-dot">✓</span></button>
+              <button type="button" class="template-card" data-template="banner" aria-pressed="false"><span class="template-illustration banner"><span class="mini-logo"></span><span class="mini-copy"><i></i><i></i><i></i></span></span><span class="template-label">Institucional <small>Impacto</small></span><span class="selected-dot">✓</span></button>
+              <button type="button" class="template-card" data-template="side" aria-pressed="false"><span class="template-illustration side"><span class="mini-avatar"></span><span class="mini-copy"><i></i><i></i><i></i></span><span class="mini-logo"></span></span><span class="template-label">Editorial <small>Elegante</small></span><span class="selected-dot">✓</span></button>
+              <button type="button" class="template-card" data-template="stripe" aria-pressed="false"><span class="template-illustration stripe"><span class="mini-avatar"></span><span class="mini-copy"><i></i><i></i><i></i></span><span class="mini-logo"></span></span><span class="template-label">Linha superior <small>Discreto</small></span><span class="selected-dot">✓</span></button>
+            </div>
+            <div class="tip-box"><span class="tip-icon">✦</span><div><strong>Dica de design</strong><p>Assinaturas mais simples costumam ser mais legíveis em diferentes aplicativos de e-mail.</p></div></div>
+          </div>
+
+          <div class="editor-panel" id="panel-dados" role="tabpanel" hidden>
+            <div class="panel-heading"><h3>Conte um pouco sobre você</h3><p>Deixe em branco o que não quiser mostrar.</p></div>
+            <div class="form-grid">
+              <label class="field full">Nome completo<input id="name" autocomplete="name" value="Marina Oliveira" placeholder="Seu nome"></label>
+              <label class="field">Cargo<input id="role" value="Diretora de Criação" placeholder="Seu cargo"></label>
+              <label class="field">Empresa<input id="company" autocomplete="organization" value="Studio Aurora" placeholder="Sua empresa"></label>
+              <label class="field">E-mail<input id="email" type="email" autocomplete="email" value="marina@studioaurora.com" placeholder="voce@empresa.com"></label>
+              <label class="field">Telefone<input id="phone" type="tel" autocomplete="tel" value="+55 (11) 99999-9999" placeholder="+55 (11) 99999-9999"></label>
+              <label class="field full">Site<input id="website" type="url" value="https://studioaurora.com" placeholder="https://suaempresa.com"></label>
+              <label class="field full">Endereço ou cidade<input id="address" value="São Paulo, Brasil" placeholder="Sua cidade ou endereço"></label>
+            </div>
+          </div>
+
+          <div class="editor-panel" id="panel-estilo" role="tabpanel" hidden>
+            <div class="panel-heading"><h3>Com a cara da sua marca</h3><p>Personalize cores, fonte e tamanho.</p></div>
+            <div class="style-group"><span class="field-title">Cor principal</span><div class="swatches" id="swatches"><button type="button" class="swatch selected" data-color="#6956e8" style="--swatch:#6956e8" aria-label="Roxo" aria-pressed="true"></button><button type="button" class="swatch" data-color="#126e78" style="--swatch:#126e78" aria-label="Petróleo" aria-pressed="false"></button><button type="button" class="swatch" data-color="#c75b42" style="--swatch:#c75b42" aria-label="Terracota" aria-pressed="false"></button><button type="button" class="swatch" data-color="#1e3652" style="--swatch:#1e3652" aria-label="Azul escuro" aria-pressed="false"></button><button type="button" class="swatch" data-color="#262626" style="--swatch:#262626" aria-label="Preto" aria-pressed="false"></button><label class="custom-color" title="Outra cor"><input id="accentColor" type="color" value="#6956e8" aria-label="Escolher outra cor"><span>+</span></label></div></div>
+            <div class="form-grid style-fields"><label class="field">Fonte<select id="font"><optgroup label="Google Fonts"><option value="'DM Sans', Arial, sans-serif">DM Sans</option><option value="Manrope, Arial, sans-serif">Manrope</option><option value="Montserrat, Arial, sans-serif">Montserrat</option><option value="Poppins, Arial, sans-serif">Poppins</option><option value="Lora, Georgia, serif">Lora</option><option value="'Playfair Display', Georgia, serif">Playfair Display</option></optgroup><optgroup label="Fontes do sistema"><option value="Arial, Helvetica, sans-serif">Arial</option><option value="Georgia, 'Times New Roman', serif">Georgia</option><option value="Verdana, Geneva, sans-serif">Verdana</option></optgroup></select></label><label class="field">Tamanho do texto<select id="fontSize"><option value="12">Compacto</option><option value="13" selected>Padrão</option><option value="14">Amplo</option></select></label></div>
+            <p class="field-hint">A prévia carrega a fonte do Google. No e-mail, uma fonte alternativa assume quando o aplicativo não permitir fontes externas.</p>
+            <label class="toggle-row"><span><strong>Mostrar divisória colorida</strong><small>Separa a foto dos seus dados</small></span><input id="showDivider" type="checkbox" checked><span class="toggle-ui"></span></label>
+          </div>
+
+          <div class="editor-panel" id="panel-personalizar" role="tabpanel" hidden>
+            <div class="panel-heading"><h3>Personalize seu modelo</h3><p>Edite o modelo escolhido mantendo sua composição e seus elementos visuais.</p></div>
+            <label class="toggle-row customize-toggle"><span><strong id="customizeTitle">Personalizar este modelo</strong><small id="customizeHint">Desativado: o layout original permanece como está.</small></span><input id="customizeToggle" type="checkbox"><span class="toggle-ui"></span></label>
+            <div id="customizationOptions" hidden>
+            <div class="custom-grid-editor" aria-label="Posição dos blocos da assinatura">
+              <label><span data-slot-label="0">Coluna 1</span><select data-grid-slot="0"><option value="photo">Foto</option><option value="info">Dados</option><option value="logo">Logo</option></select></label>
+              <label><span data-slot-label="1">Coluna 2</span><select data-grid-slot="1"><option value="photo">Foto</option><option value="info" selected>Dados</option><option value="logo">Logo</option></select></label>
+              <label><span data-slot-label="2">Coluna 3</span><select data-grid-slot="2"><option value="photo">Foto</option><option value="info">Dados</option><option value="logo" selected>Logo</option></select></label>
+            </div>
+            <p class="field-hint">Ao trocar um bloco, as cores, linhas e faixas do modelo escolhido continuam nas mesmas posições.</p>
+            <div class="custom-controls">
+              <div class="custom-control-group"><h4>Composição</h4><div class="form-grid"><label class="field">Alinhamento dos dados<select id="customAlign"><option value="left">À esquerda</option><option value="right">À direita</option></select></label><label class="field">Fundo da assinatura<input id="customBg" type="color" value="#ffffff"></label><label class="field">Tamanho da foto <output id="photoSizeValue">68 px</output><input id="customPhotoSize" type="range" min="44" max="100" step="4" value="68"></label><label class="field">Largura do logo <output id="logoSizeValue">84 px</output><input id="customLogoSize" type="range" min="48" max="112" step="4" value="84"></label></div></div>
+              <div class="custom-control-group"><h4>Ícones do grid</h4><div class="form-grid"><label class="field">Cor dos ícones<select id="customIconMode"><option value="auto">Automática</option><option value="custom">Escolher cor</option></select></label><label class="field">Cor personalizada<input id="customIconColor" type="color" value="#6956e8"></label></div></div>
+              <div class="custom-control-group"><h4>Borda e cantos</h4><div class="form-grid"><label class="field">Cantos arredondados <output id="radiusValue">0 px</output><input id="customRadius" type="range" min="0" max="24" step="2" value="0"></label><label class="field">Espessura da borda <output id="borderWidthValue">1 px</output><input id="customBorderWidth" type="range" min="0" max="4" step="1" value="1"></label><label class="field">Cor da borda<input id="customBorderColor" type="color" value="#e9eaf0"></label></div></div>
+              <div class="custom-control-group"><h4>Nome</h4><div class="form-grid"><label class="field">Fonte<select id="customNameFont" class="custom-font"></select></label><label class="field">Tamanho<input id="customNameSize" type="number" min="14" max="30" value="20"></label></div></div>
+              <div class="custom-control-group"><h4>Cargo e empresa</h4><div class="form-grid"><label class="field">Fonte<select id="customRoleFont" class="custom-font"></select></label><label class="field">Tamanho<input id="customRoleSize" type="number" min="10" max="20" value="13"></label></div></div>
+              <div class="custom-control-group"><h4>Contatos</h4><div class="form-grid"><label class="field">Fonte<select id="customContactFont" class="custom-font"></select></label><label class="field">Tamanho<input id="customContactSize" type="number" min="10" max="18" value="13"></label></div></div>
+            </div>
+            <button type="button" id="saveCustomTemplate" class="save-custom-button">Salvar como modelo da equipe</button>
+            <p class="field-hint">O arquivo salvo inclui este grid, a identidade da empresa e o logo. Cada colega poderá importá-lo e preencher seus dados.</p>
+            </div>
+          </div>
+
+          <div class="editor-panel" id="panel-extras" role="tabpanel" hidden>
+            <div class="panel-heading"><h3>Imagens e detalhes</h3><p>Adicione sua foto, o logo da empresa e escolha os ícones.</p></div>
+            <div class="asset-section"><div class="subsection-label">Logo da empresa</div><p class="asset-description">Aparece nos modelos com área de marca. Envie um arquivo ou cole o endereço público da imagem.</p><div class="photo-actions"><label class="upload-button">↑ Enviar logo <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="removeLogo" type="button" class="subtle-button">Remover logo</button><span id="logoStatus" class="asset-status">Usando iniciais da empresa</span></div><label class="field full image-url-field">URL pública do logo<input id="logoUrl" type="url" placeholder="https://exemplo.com/logo.png"><small>Uma URL pública costuma funcionar melhor nos aplicativos de e-mail.</small></label></div>
+            <div class="section-separator"></div>
+            <div class="subsection-label">Foto do perfil</div>
+            <div class="photo-actions"><label class="upload-button">↑ Enviar foto <input id="photoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="libraryButton" type="button" class="outline-button">Minha biblioteca</button><button id="removePhoto" type="button" class="subtle-button">Sem foto</button></div>
+            <p class="field-hint">Fotos enviadas ficam salvas apenas neste navegador. O arquivo HTML inclui a imagem; alguns clientes de e-mail podem bloquear imagens incorporadas.</p>
+            <div class="subsection-label">Personagens sugeridos</div>
+            <div class="avatar-grid" id="avatarGrid" aria-label="Personagens sugeridos"></div>
+            <div class="emoji-picker"><div class="subsection-label">Emoji com fundo colorido</div><p class="field-hint">Escolha um emoji e a cor do círculo, como em um grupo do WhatsApp.</p><div id="emojiGrid" class="emoji-grid" aria-label="Escolha um emoji"></div><div class="form-grid"><label class="field">Outro emoji<input id="emojiInput" type="text" maxlength="16" placeholder="Cole um emoji"></label><label class="field">Cor do fundo<input id="emojiBg" type="color" value="#eee8ff"></label></div></div>
+            <div id="libraryPanel" class="library-panel" hidden><div class="subsection-label">Fotos salvas neste navegador</div><div id="photoLibrary" class="library-grid"></div></div>
+            <label class="field full image-url-field">Ou use uma imagem pública por URL<input id="imageUrl" type="url" placeholder="https://exemplo.com/sua-foto.png"><small>Esta opção é a mais confiável para exibir a foto a quem recebe o e-mail.</small></label>
+            <div class="section-separator"></div>
+            <div class="subsection-label">Ícones e links</div>
+            <div class="icon-options" id="iconOptions"><button type="button" data-icon-style="none" aria-pressed="false">Sem ícones</button><button type="button" data-icon-style="line" aria-pressed="true" class="selected"><img src="assets/lucide/mail.svg" alt=""> Outline</button><button type="button" data-icon-style="filled" aria-pressed="false"><span class="filled-sample">✉</span> Cheios</button></div>
+            <p class="field-hint">Carta, telefone, cursor, pin e logos minimalistas de LinkedIn e Instagram. Os rótulos continuam legíveis caso o aplicativo de e-mail oculte imagens.</p>
+            <label class="field social-color-field">Cor das logos sociais<input id="socialIconColor" type="color" value="#34384e"><small>Aplica a mesma cor ao LinkedIn e ao Instagram.</small></label>
+            <div class="form-grid"><label class="field">LinkedIn<input id="linkedin" type="url" placeholder="https://linkedin.com/in/seu-perfil"></label><label class="field">Instagram<input id="instagram" type="url" placeholder="https://instagram.com/seu-perfil"></label><label class="field full">Frase ou chamada opcional<input id="tagline" placeholder="Vamos criar algo incrível juntos?"></label></div>
+            <div class="subsection-label icon-title">Ícone de destaque <span>para acompanhar a frase</span></div>
+            <div id="accentIcons" class="accent-icons" aria-label="Escolha um ícone de destaque"></div>
+          </div>
+
+          <div class="editor-footer"><span>HTML simples para copiar ou exportar.</span><button type="button" id="nextButton" class="text-next">Próximo passo <span>→</span></button></div>
+        </section>
+
+        <section class="preview-column" aria-labelledby="previewTitle">
+          <div class="preview-top"><div><span class="section-kicker">02 / VISUALIZAR</span><h2 id="previewTitle">Prévia em tempo real</h2></div><div class="preview-status"><span></span> Atualizada</div></div>
+          <div class="preview-stage">
+            <div class="mail-window">
+              <div class="mail-toolbar"><div class="window-dots"><i></i><i></i><i></i></div><span>Nova mensagem</span><span class="toolbar-icons">— &nbsp; □ &nbsp; ×</span></div>
+              <div class="mail-fields"><div><span>Para</span> cliente@exemplo.com</div><div><span>Assunto</span> Olá, vamos conversar?</div></div>
+              <div class="mail-body"><p>Olá, tudo bem?</p><p>Foi um prazer conversar com você. Nos falamos em breve!</p><p>Abraços,</p><div id="signaturePreview" class="signature-preview"></div></div>
+              <div class="mail-bottom"><span class="fake-send">Enviar <span>⌄</span></span><span>📎 &nbsp; ▧ &nbsp; ⋯</span></div>
+            </div>
+            <div class="stage-caption"><span class="sparkle">✦</span> É assim que sua assinatura aparece no e-mail <span class="mobile-preview-hint">· Deslize para ver toda a assinatura</span></div>
+          </div>
+          <div class="export-card"><div class="export-copy"><div><strong>Assinatura pronta</strong><p>Exporte o HTML ou copie a assinatura formatada.</p></div></div><div class="export-actions"><button type="button" id="copyButton" class="copy-button">Copiar assinatura</button><button type="button" id="exportButton" class="export-button">Exportar HTML</button></div></div>
+          <div class="template-transfer"><div><strong>Modelos da equipe</strong><p>Salve seu grid e a identidade da empresa. Cada pessoa importa o arquivo e preenche seus próprios dados.</p></div><div class="template-transfer-actions"><button type="button" id="exportTemplate" class="outline-button">Salvar modelo</button><label class="upload-template">Importar modelo<input id="importTemplate" type="file" accept=".json,application/json" hidden></label></div></div>
+          <p class="privacy-note">✧ Seus dados ficam apenas neste navegador durante a edição.</p>
+        </section>
+      </div>
+      <footer class="page-footer"><span>Produto gratuito por <strong>Truffle Hunters</strong></span><button class="help-link" id="helpButton" type="button">Como usar</button></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca, confira a prévia e copie ou exporte o HTML.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>Para fotos e logos aparecerem para quem recebe, use uma URL pública da imagem.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
+</body>
+</html>
