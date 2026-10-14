@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261014-simple-export">
-  <script src="script.js?v=20261014-simple-export" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261014-image-copy">
+  <script src="assets/html-to-image.js" defer></script>
+  <script src="script.js?v=20261014-image-copy" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -138,6 +139,7 @@
             <div class="stage-caption"><span class="sparkle">✦</span> É assim que sua assinatura aparece no e-mail <span class="mobile-preview-hint">· Deslize para ver toda a assinatura</span></div>
           </div>
           <div class="export-card"><div class="export-copy"><div><strong>Assinatura pronta</strong><p>Copie e cole diretamente nas configurações do Gmail.</p></div></div><div class="export-actions"><button type="button" id="copyButton" class="copy-button">Copiar para Gmail</button><button type="button" id="exportButton" class="export-button">Exportar HTML</button></div></div>
+          <div class="image-export-card"><div><strong>Manter foto, logo e layout?</strong><p>Copie a assinatura inteira como uma imagem. Ao colar no Gmail, ela mantém o visual; os textos ficam dentro da imagem e não serão links clicáveis.</p></div><div class="image-export-actions"><button type="button" id="copyImageButton" class="export-button">Copiar imagem para Gmail</button><button type="button" id="downloadImageButton" class="outline-button">Baixar PNG</button></div></div>
           <div class="export-profile"><label for="emailProfile">Usar no</label><select id="emailProfile"><option value="gmail">Gmail · sem imagens</option><option value="outlook">Outlook</option><option value="other">Apple Mail e outros</option><option value="full">HTML completo · com imagens</option></select><p id="exportGuidance" role="status" aria-live="polite"></p></div>
           <div class="template-transfer"><div><strong>Modelos da equipe</strong><p>Salve seu grid e a identidade da empresa. Cada pessoa importa o arquivo e preenche seus próprios dados.</p></div><div class="template-transfer-actions"><button type="button" id="exportTemplate" class="outline-button">Salvar modelo</button><label class="upload-template">Importar modelo<input id="importTemplate" type="file" accept=".json,application/json" hidden></label></div></div>
           <p class="privacy-note">✧ Seus dados ficam apenas neste navegador durante a edição.</p>
@@ -147,7 +149,7 @@
     </main>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca e confira a prévia.</li><li>Clique em “Copiar para Gmail” e cole nas configurações de assinatura do Gmail.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON. Colegas podem importá-lo e preencher seus próprios dados.</li></ol><p>Para facilitar a colagem, o formato Gmail usa iniciais ou emoji no lugar de foto e logo. O arquivo “HTML completo” mantém as imagens embutidas, mas não é indicado para o Gmail.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
+  <dialog id="helpDialog" class="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar" type="submit">×</button><div class="eyebrow">GUIA RÁPIDO</div><h2>Crie em poucos passos.</h2><ol><li>Escolha um modelo e preencha seus dados.</li><li>Ajuste a marca e confira a prévia.</li><li>Use “Copiar imagem para Gmail” para manter foto e logo, ou “Copiar para Gmail” para manter texto e links clicáveis sem imagens.</li><li>Cole em Configurações → Assinatura do Gmail e salve.</li><li>Para distribuir um padrão, exporte o modelo institucional em JSON.</li></ol><p>O HTML completo contém os dados das imagens, mas o Gmail pode removê-los ao colar. A opção PNG evita imagens e ícones quebrados porque copia o visual inteiro em uma única imagem.</p><button class="export-button" type="submit">Entendi</button></form></dialog>
   <section id="cropDialog" class="crop-dialog" aria-labelledby="cropTitle" aria-describedby="cropDescription" hidden>
     <div class="crop-header"><div><span class="section-kicker">AJUSTAR IMAGEM</span><h2 id="cropTitle">Recortar foto</h2></div><button id="cropClose" class="crop-close" type="button" aria-label="Fechar editor de imagem">×</button></div>
     <p id="cropDescription" class="crop-description">Arraste a imagem para escolher o enquadramento.</p>

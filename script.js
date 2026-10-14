@@ -678,6 +678,50 @@ function updateExportStatus() {
   }
 }
 $('emailProfile').addEventListener('change',updateExportStatus);
+async function renderSignaturePng() {
+  if (!window.htmlToImage?.toBlob) throw new Error('O gerador de imagem não carregou. Atualize a página e tente novamente.');
+  await prepareContactIcons().catch(() => {});
+  const outer = document.createElement('div');
+  outer.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none;z-index:-1';
+  const frame = document.createElement('div');
+  frame.style.cssText = 'width:540px;background:#ffffff;overflow:hidden';
+  frame.innerHTML = makeSignature('full');
+  outer.append(frame); document.body.append(outer);
+  try {
+    await Promise.all([...frame.querySelectorAll('img')].map((image) => image.decode()));
+    await document.fonts.ready;
+    let blob;
+    try { blob = await window.htmlToImage.toBlob(frame, {backgroundColor:'#ffffff',pixelRatio:1.5}); }
+    catch { blob = await window.htmlToImage.toBlob(frame, {backgroundColor:'#ffffff',pixelRatio:1.5,skipFonts:true}); }
+    if (!blob || blob.type !== 'image/png') throw new Error('Não foi possível gerar o PNG. Verifique se as imagens por URL permitem acesso público.');
+    return blob;
+  } finally { outer.remove(); }
+}
+function savePng(blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'minha-assinatura.png';
+  document.body.append(anchor); anchor.click(); anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('copyImageButton').addEventListener('click', async () => {
+  const button = $('copyImageButton'); button.disabled = true; button.textContent = 'Preparando imagem…';
+  // A gravação precisa começar no gesto do clique; o PNG pode terminar depois.
+  const png = renderSignaturePng();
+  try {
+    if (!window.ClipboardItem || !navigator.clipboard?.write) throw new Error('Este navegador não permite copiar PNG. Use “Baixar PNG”.');
+    await navigator.clipboard.write([new ClipboardItem({'image/png':png})]);
+    toast('Imagem copiada. Cole no editor de assinaturas do Gmail.');
+  } catch (error) {
+    await png.catch(() => {});
+    toast(error.message || 'Não foi possível copiar. Use “Baixar PNG”.');
+  } finally { button.disabled = false; button.textContent = 'Copiar imagem para Gmail'; }
+});
+$('downloadImageButton').addEventListener('click', async () => {
+  const button = $('downloadImageButton'); button.disabled = true; button.textContent = 'Gerando PNG…';
+  try { savePng(await renderSignaturePng()); toast('PNG baixado. Envie-o pelo botão de imagem do Gmail.'); }
+  catch (error) { toast(error.message || 'Não foi possível gerar o PNG.'); }
+  finally { button.disabled = false; button.textContent = 'Baixar PNG'; }
+});
 $('copyButton').addEventListener('click', async () => {
   const target = $('emailProfile').value;
   const html = makeSignature(selectedExportProfile());
